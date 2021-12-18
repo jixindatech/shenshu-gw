@@ -4,7 +4,7 @@ local cookie = require "resty.cookie"
 local upload	= require "resty.upload"
 
 local logger = require "gw.core.log"
-local util   = require "gw.core.util"
+local tab   = require "gw.core.table"
 
 local tab_insert = table.insert
 
@@ -136,7 +136,7 @@ function _M.parse_request_body(config, request_headers, collections)
             --_LOG_"Request body size larger than client_body_buffer_size, ignoring request body"
             return nil
         end
-    elseif util.table_has_key(content_type_header, config._allowed_content_types) then
+    elseif tab.table_has_key(content_type_header, config._allowed_content_types) then
         -- if the content type has been whitelisted by the user, set REQUEST_BODY as a string
         ngx.req.read_body()
 

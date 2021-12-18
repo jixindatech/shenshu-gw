@@ -7,7 +7,6 @@ local balancer = require("ngx.balancer")
 
 local config      = require("gw.core.config")
 local yaml_config = require("gw.core.config_yaml")
-local request     = require("gw.core.request")
 local ssl         = require("gw.ssl")
 local router      = require("gw.router")
 local upstream    = require("gw.upstream")
@@ -100,8 +99,6 @@ function _M.http_access_phase()
     if not route then
         return ngx.exit(404)
     end
-
-    request.get(api_ctx)
 
     local code, err = plugin.run("access", api_ctx)
     if code then

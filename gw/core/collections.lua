@@ -1,7 +1,7 @@
 local _M = {}
 
 local request   = require "gw.core.request"
-local util      = require "gw.utils.util"
+local tab      = require "gw.core.table"
 
 local string_format = string.format
 local string_match  = string.match
@@ -83,7 +83,7 @@ _M.lookup = {
             return
         end
 
-        if not res_type or not util.table_has_key(res_type, config._res_body_mime_types) then
+        if not res_type or not tab.table_has_key(res_type, config._res_body_mime_types) then
             ctx.short_circuit = not eof
             return
         end
@@ -106,6 +106,57 @@ _M.lookup = {
         end
     end,
     log = function() end
+}
+
+-- parse collection elements based on a given directive
+_M.parse = {
+    specific = function(config, collection, value)
+        --_LOG_"Parse collection is getting a specific value: " .. value
+        return collection[value]
+    end,
+    regex = function(config, collection, value)
+        --_LOG_"Parse collection is geting the regex: " .. value
+        local v
+        local n = 0
+        local _collection = {}
+        for k, _ in pairs(collection) do
+            --_LOG_"checking " .. k
+            if ngx.re.find(k, value, config._pcre_flags) then
+                v = collection[k]
+                if type(v) == "table" then
+                    for __, _v in pairs(v) do
+                        n = n + 1
+                        _collection[n] = _v
+                    end
+                else
+                    n = n + 1
+                    _collection[n] = v
+                end
+            end
+        end
+        return _collection
+    end,
+    keys = function(config, collection)
+        --_LOG_"Parse collection is getting the keys"
+        return _M.table_keys(collection)
+    end,
+    values = function(config, collection)
+        --_LOG_"Parse collection is getting the values"
+        return _M.table_values(collection)
+    end,
+    all = function(config, collection)
+        local n = 0
+        local _collection = {}
+        for _, key in ipairs(_M.table_keys(collection)) do
+            n = n + 1
+            _collection[n] = key
+        end
+        for _, value in ipairs(_M.table_values(collection)) do
+            n = n + 1
+            _collection[n] = value
+        end
+        return _collection
+    end
 }
 
 return _M
