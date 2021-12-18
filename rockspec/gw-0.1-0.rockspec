@@ -1,4 +1,4 @@
-package = "shenshugw"
+package = "gw"
 version = "0.1-0"
 supported_platforms = {"linux"}
 
@@ -9,8 +9,8 @@ source = {
 }
 
 description = {
-    summary = "zero trust gateway.",
-    homepage = "https://github.com/jixindatech/ztgw",
+    summary = "shenshu gateway.",
+    homepage = "https://github.com/jixindatech/shenshu-gw",
     maintainer = "Fangang Cheng <chengfangang@qq.com>"
 }
 
