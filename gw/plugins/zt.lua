@@ -21,7 +21,7 @@ local get_method = ngx.req.get_method
 local read_body = ngx.req.read_body
 local get_body =  ngx.req.get_body_data
 
-local gw_config = ngx.config.prefix() .. "etc/gw.yaml"
+local zt_config = ngx.config.prefix() .. "etc/zt.yaml"
 local cached_version
 local module = {}
 local module_name = "gw"
@@ -84,16 +84,16 @@ function _M.init_worker()
     end
 
     local attributes
-    attributes, err = lfs.attributes(gw_config)
+    attributes, err = lfs.attributes(zt_config)
     if not attributes then
-        ngx.log(ngx.ERR, "failed to fetch ", gw_config, " attributes: ", err)
+        ngx.log(ngx.ERR, "failed to fetch ", zt_config, " attributes: ", err)
         return
     end
 
     local f
-    f, err = io.open(gw_config, "r")
+    f, err = io.open(zt_config, "r")
     if not f then
-        ngx.log(ngx.ERR, "failed to open file ", gw_config, " : ", err)
+        ngx.log(ngx.ERR, "failed to open file ", zt_config, " : ", err)
         return err
     end
 

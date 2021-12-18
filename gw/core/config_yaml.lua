@@ -37,7 +37,6 @@ local gw_yaml_ctime
 local gw_yaml_path  = ngx.config.prefix() .. "etc/gw.yaml"
 
 local function read_gw_yaml(pre_mtime)
-    ngx.log(ngx.ERR, gw_yaml_path)
     local attributes, err = lfs.attributes(gw_yaml_path)
     if not attributes then
         ngx.log(ngx.ERR, "failed to fetch ", gw_yaml_path, " attributes: ", err)

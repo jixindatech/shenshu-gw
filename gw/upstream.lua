@@ -188,7 +188,8 @@ local function get_server_picker(upstream, checker, version)
     return cached_obj, nil
 end
 
-function _M.get(api_ctx, id)
+function _M.get(ctx, id)
+    ngx.log(ngx.ERR, "http_balancer_phase")
     local upstream_item = module:get(id)
     if upstream_item == nil then
         return nil, "invalid upstream id"
@@ -202,16 +203,16 @@ function _M.get(api_ctx, id)
         checker = get_upstream_healthchecker(upstream)
     end
 
-    local state, code = retry_handle(upstream, api_ctx)
+    local state, code = retry_handle(upstream, ctx)
     if checker then
         if state == "failed" then
             if code == 504 then
-                checker:report_timeout(api_ctx.balancer_ip, api_ctx.balancer_port, upstream.checks.host)
+                checker:report_timeout(ctx.balancer_ip, ctx.balancer_port, upstream.checks.host)
             else
-                checker:report_tcp_failure(api_ctx.balancer_ip, api_ctx.balancer_port, upstream.checks.host)
+                checker:report_tcp_failure(ctx.balancer_ip, ctx.balancer_port, upstream.checks.host)
             end
         elseif state == "next" then
-            checker:report_http_status(api_ctx.balancer_ip, api_ctx.balancer_port, upstream.checks.host, code)
+            checker:report_http_status(ctx.balancer_ip, ctx.balancer_port, upstream.checks.host, code)
         end
     end
 
@@ -220,15 +221,15 @@ function _M.get(api_ctx, id)
         return "", 0, err
     end
 
-    local server, err = server_picker.value.get(api_ctx)
+    local server, err = server_picker.value.get(ctx)
     if not server then
         return nil, nil, "failed to find valid upstream server, " .. err
     end
 
     local balancer_ip, balancer_port, err = ip.parse_addr(server)
-    api_ctx.balancer_server = server
-    api_ctx.balancer_ip = balancer_ip
-    api_ctx.balancer_port = balancer_port
+    ctx.balancer_server = server
+    ctx.balancer_ip = balancer_ip
+    ctx.balancer_port = balancer_port
 
     return balancer_ip, balancer_port, err
 end

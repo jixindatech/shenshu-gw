@@ -2,11 +2,12 @@ local require = require
 local math    = math
 local error   = error
 local ngx     = ngx
-
+local tablepool   = require("tablepool")
 local balancer = require("ngx.balancer")
 
 local config      = require("gw.core.config")
 local yaml_config = require("gw.core.config_yaml")
+local request     = require("gw.core.request")
 local ssl         = require("gw.ssl")
 local router      = require("gw.router")
 local upstream    = require("gw.upstream")
@@ -65,7 +66,16 @@ end
 
 function _M.http_ssl_phase()
     ngx.log(ngx.ERR, 'ssl phase')
-    local sni, err = ssl.run()
+
+    local ngx_ctx = ngx.ctx
+    local api_ctx = ngx_ctx.api_ctx
+
+    if api_ctx == nil then
+        api_ctx = tablepool.fetch("api_ctx", 0, 32)
+        ngx_ctx.api_ctx = api_ctx
+    end
+
+    local sni, err = ssl.run(api_ctx)
     if err ~= nil then
         ngx.log(ngx.ERR, 'ssl phase error: ' .. err)
         ngx.exit(ngx.ERROR)
@@ -76,11 +86,9 @@ end
 
 function _M.http_access_phase()
     ngx.log(ngx.ERR, 'access phase')
-    local api_ctx = ngx.ctx.api_ctx
-    if api_ctx == nil then
-        api_ctx = { }
-        ngx.ctx.api_ctx = api_ctx
-    end
+    local ngx_ctx = ngx.ctx
+    local api_ctx = tablepool.fetch("api_ctx", 0, 32)
+    ngx_ctx.api_ctx = api_ctx
 
     api_ctx.var = ngx.var
     --api_ctx.var.request_method = ngx.var.request_method
@@ -92,6 +100,8 @@ function _M.http_access_phase()
     if not route then
         return ngx.exit(404)
     end
+
+    request.get(api_ctx)
 
     local code, err = plugin.run("access", api_ctx)
     if code then
@@ -132,11 +142,14 @@ function _M.http_body_filter_phase()
 end
 
 function _M.http_log_phase()
-    local api_ctx = ngx.ctx.api_ctx
     ngx.log(ngx.ERR, 'log phase')
+
+    local api_ctx = ngx.ctx.api_ctx
     plugin.run("log", api_ctx)
 
     log.run(api_ctx)
+
+    tablepool.release("api_ctx", api_ctx)
 end
 
 return _M

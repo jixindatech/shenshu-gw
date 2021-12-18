@@ -5,7 +5,8 @@ local zt = require("gw.plugins.zt")
 
 
 local _M = {}
-local local_plugins = { zt }
+-- local local_plugins = { zt }
+local local_plugins = { }
 local function plugin_init_worker()
     for _, item in ipairs(local_plugins) do
         if item.init_worker then

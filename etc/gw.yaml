@@ -1,13 +1,16 @@
 routes:
   -
+    id: 1
     host: www.test1.com
     uri: /*
     upstream_id: 1
   -
+    id: 2
     host: www.test2.com
     uri: /*
     upstream_id: 2
   -
+    id: 3
     host: www.test.com
     uri: /*
     upstream_id: 2
@@ -18,6 +21,7 @@ upstream:
       "127.0.0.1:6000": 1
       "127.0.0.1:7000": 1
     type: roundrobin
+    retries: 2
   -
     id: 2
     nodes:

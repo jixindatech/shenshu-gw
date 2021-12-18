@@ -102,7 +102,7 @@ local function set_pem_ssl_key(cert, key)
     return nil
 end
 
-function _M.run()
+function _M.run(ctx)
     local err
     if not ssl_router or
             ssl_router_version ~= module.conf_version then
@@ -113,7 +113,6 @@ function _M.run()
         ssl_router_version = module.conf_version
     end
 
-    local ctx = {}
     local sni
     sni, err = ngx_ssl.server_name()
     if type(sni) ~= "string" then

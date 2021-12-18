@@ -15,7 +15,7 @@ local ip        = require("gw.utils.ip")
 
 local _M = {version = "0.1" }
 
-local module_name = "router"
+local module_name = "routes"
 local module
 
 local cached_version
@@ -63,20 +63,6 @@ end
 local function push_host_router(route, host_routes, only_uri_routes)
     if type(route) ~= "table" then
         return
-    end
-
-    local filter_fun, err
-    if route.value.filter_func then
-        filter_fun, err = loadstring(
-                "return " .. route.value.filter_func,
-                "router#" .. route.value.id)
-        if not filter_fun then
-            core.log.error("failed to load filter function: ", err,
-                    " route id: ", route.value.id)
-            return
-        end
-
-        filter_fun = filter_fun()
     end
 
     local hosts = route.value.hosts or {route.value.host}
