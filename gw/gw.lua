@@ -57,7 +57,7 @@ function _M.http_init_worker()
         ngx.log(ngx.ERR, "balancer init worker failed:" .. err)
     end
 
-    local ok, err = plugin.init_worker()
+    ok, err = plugin.init_worker()
     if err ~= nil then
         ngx.log(ngx.ERR, "gw init worker failed:" .. err)
     end

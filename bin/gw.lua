@@ -16,7 +16,7 @@ excute_cmd("install -d -m 777 /tmp/gw_cores/")
 local pkg_cpath_org = package.cpath
 local pkg_path_org = package.path
 
-local gw_home = "/usr/local/gw"
+local gw_home = "/root/onlinegit/shenshu-gw"
 local pkg_cpath = gw_home .. "/deps/lib64/lua/5.1/?.so;"
                   .. gw_home .. "/deps/lib/lua/5.1/?.so;;"
 local pkg_path  = gw_home .. "/deps/share/lua/5.1/gw/lua/?.lua;"
