@@ -241,7 +241,6 @@ shenshu_rule:
       specific:
         - 4
         - 5
-        - 6
 shenshu_specific_rule:
   -
     id: 1
@@ -277,93 +276,32 @@ shenshu_specific_rule:
     id: 4
     timestamp: 1
     config:
-      -
-        id: 1
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-      -
-        id: 4
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
+      action: 1
+      rules:
+        -
+          variable: "URI"
+          operator: "STR_MATCH"
+          pattern: "/login"
+          header: ""
+        - variable: "REQ_HEADER"
+          header: "user-agent"
+          operator: "STR_CONTAINS"
+          pattern: "win7"
+
   -
     id: 5
     timestamp: 1
     config:
-      -
-        id: 1
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-      -
-        id: 4
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-  -
-    id: 6
-    timestamp: 1
-    config:
-      -
-        id: 1
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-      -
-        id: 4
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-
-
+      action: 1
+      rules:
+        -
+          variable: "URI"
+          operator: "STR_MATCH"
+          pattern: "/logout"
+          header: ""
+        - variable: "REQ_HEADER"
+          header: "user-agent"
+          operator: "STR_CONTAINS"
+          pattern: "ios"
 
 #END

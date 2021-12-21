@@ -2,7 +2,6 @@ local type = type
 local ipairs = iparis
 local require = require
 
-local logger    = require("resty.config.log")
 local tab      = require("gw.core.table")
 --local libinject = require("resty.libinjection")
 
@@ -201,7 +200,7 @@ function _M.regex(config, subject, pattern)
         captures, err = ngx.re.match(subject, pattern, opts)
 
         if err then
-            logger.warn(config, "error in ngx.re.match: " .. err)
+            ngx.log(ngx.ERR, "error in ngx.re.match: " .. err)
         end
 
         if captures then
@@ -228,7 +227,7 @@ function _M.refind(config, subject, pattern)
         from, to, err = ngx.re.find(subject, pattern, opts)
 
         if err then
-            logger.warn(config, "error in ngx.re.find: " .. err)
+            ngx.log(ngx.ERR, "error in ngx.re.find: " .. err)
         end
 
         if from then

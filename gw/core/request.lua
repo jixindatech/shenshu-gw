@@ -7,6 +7,7 @@ local logger = require "gw.core.log"
 local tab   = require "gw.core.table"
 
 local tab_insert = table.insert
+local tab_concat = table.concat
 
 function _M.parse_request_body(config, request_headers, collections)
     local content_type_header = request_headers["content-type"]
@@ -168,7 +169,7 @@ function _M.request_uri()
         request_line[3] = ngx.var.query_string
     end
 
-    return table_concat(request_line, '')
+    return tab_concat(request_line, '')
 end
 
 function _M.request_uri_raw(request_line, method)

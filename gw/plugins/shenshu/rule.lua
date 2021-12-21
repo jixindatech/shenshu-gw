@@ -1,5 +1,5 @@
 local type = type
-local typeof = require "typeof"
+local typeof = require("typeof")
 local ipairs = ipairs
 local tostring = tostring
 local require = require
@@ -95,18 +95,17 @@ function _M.init_worker(ss_config)
     return nil
 end
 
-local function _rules_match(rule, opts)
+local function rules_match(rule, variable, opts)
     local ok, text = false, ""
-
     if typeof.table(rule.variable) then
         for _, v in ipairs(rule.variable) do
-            ok, text = _rules_match(rule, opts)
+            ok, text = rules_match(rule, opts)
             if ok then
                 break
             end
         end
     else
-        ok, text = operator[rule.operator](opts, rule.variable, rule.pattern)
+        ok, text = operator.lookup[rule.operator](opts, variable, rule.pattern)
     end
 
     return ok, text
@@ -116,37 +115,39 @@ function _M.access(ctx)
     local route = ctx.matched_route
     local rules = module:get(route.id)
     if rules.value ~= nil then
-        if rules.value.matcher == nil then
+        if rules.value.specific_rules == nil then
             local match_rules, err =specific.get_rules(rules.value.specific)
             if err ~= nil then
                 return false, err
             end
-            rules.value.speicifc_rules = match_rules
+
+            rules.value.specific_rules = match_rules
         end
 
         local request = tablepool.fetch("rule_collections", 0, 32)
         collections.lookup["access"](rules, request, ctx)
 
-        for _, rule in ipairs(rules.value.specific_rule) do
-            local text, variable
-            local pattern  = rule.pattern
+        for _, item in ipairs(rules.value.specific_rules) do
+            local action = item.action
+            for _, rule in ipairs(item.rules) do
+                local text, variable
 
-            if rule.variable == "REQ_HEADER" then
-                variable = request.REQUEST_HEADERS[rule.header]
-            elseif rule.variable == "FILE_NAMES" then
-                variable = request.FILES_NAMES
-            elseif rule.variable == "FILE" then
-                variable = request.FILES_TMP_CONTENT
-            else
-                variable = request[rule.variable]
+                if rule.variable == "REQ_HEADER" then
+                    variable = request.REQUEST_HEADERS[rule.header]
+                elseif rule.variable == "FILE_NAMES" then
+                    variable = request.FILES_NAMES
+                elseif rule.variable == "FILE" then
+                    variable = request.FILES_TMP_CONTENT
+                else
+                    variable = request[rule.variable]
+                end
+
+                local ok
+                ok, text = rules_match(rule, variable, rules)
+                if ok ~= true then
+                    break
+                end
             end
-
-            local ok
-            ok, text = _rules_match(rule, rules)
-            if ok ~= true then
-                break
-            end
-
         end
     end
 end

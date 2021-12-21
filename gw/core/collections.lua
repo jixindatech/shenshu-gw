@@ -39,7 +39,6 @@ _M.lookup = {
         collections.REQUEST_ARGS      = request_common_args
         collections.REQUEST_LINE      = request_var
         collections.PROTOCOL          = ngx.var.server_protocol
-        collections.TX                = ctx.storage["TX"]
         collections.NGX_VAR           = ngx.var
         collections.MATCHED_VARS      = {}
         collections.MATCHED_VAR_NAMES = {}

@@ -46,7 +46,8 @@ function _M.get_rules(ids)
         if rule == nil then
             return nil, "not found rule id:" .. tostring(v)
         end
-        tab_insert(rules, rule)
+
+        tab_insert(rules, rule.value)
     end
 
     return rules, nil
