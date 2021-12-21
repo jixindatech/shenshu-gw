@@ -10,7 +10,7 @@ local config = require("gw.core.config")
 local ngx = ngx
 
 local module = {}
-local module_name = "batch_rule"
+local module_name = "shenshu_batch_rule"
 local forbidden_code
 local broker_list = {}
 local kafka_topic = ""

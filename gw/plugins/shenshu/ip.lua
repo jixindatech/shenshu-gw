@@ -67,7 +67,7 @@ function _M.init_worker(ss_config)
     end
 
     if module.local_config.log.kafka and module.local_config.log.kafka.broker ~= nil then
-        for _, item in pairs(module.local_config.log.kafka.broker) do
+        for _, item in ipairs(module.local_config.log.kafka.broker) do
             tab_insert(broker_list, item)
         end
         if #broker_list == 0 then
@@ -82,8 +82,7 @@ function _M.init_worker(ss_config)
 end
 
 function _M.access(ctx)
-    ctx.ip = "1.1.1.1"
-
+    ctx.ip = ctx.var.remote_addr
     local route = ctx.matched_route
     local ips = module:get(route.id)
     if ips.value.allow ~= nil then

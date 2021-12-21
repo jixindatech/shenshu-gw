@@ -51,8 +51,8 @@ function _M.init_worker()
     if err ~= nil then
         return err
     end
- --[[
-    err = batch_rule.init_worker(yaml_confi)
+
+    err = rule.init_worker(yaml_config)
     if err ~= nil then
         return err
     end
@@ -61,7 +61,12 @@ function _M.init_worker()
     if err ~= nil then
         return err
     end
-    ]]--
+        --[[
+        err = batch_rule.init_worker(yaml_confi)
+       if err ~= nil then
+           return err
+       end
+       ]]--
 end
 
 function _M.access(ctx)
@@ -78,10 +83,13 @@ function _M.access(ctx)
         ngx.log(ngx.ERR, "ip allowd")
     end
 
-    status = cc.access(ctx)
-    --[[
-        status = rule.access(ctx)
-    ]]--
+    status, err = cc.access(ctx)
+    if err ~= nil then
+        ngx.exit(400)
+    end
+
+    status = rule.access(ctx)
+
 end
 
 function _M.log(ctx)

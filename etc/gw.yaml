@@ -224,5 +224,146 @@ shenshu_cc:
         mode: "ip"
         threshold: 10
         uri: "/login"
+shenshu_rule:
+  -
+    id: 1
+    timestamp: 1
+    config:
+      action: 1
+      decoders:
+        form: true
+        json: true
+        multipart: true
+      batch:
+        - 1
+        - 2
+        - 3
+      specific:
+        - 4
+        - 5
+        - 6
+shenshu_specific_rule:
+  -
+    id: 1
+    timestamp: 1
+    config:
+      -
+        id: 1
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+      -
+        id: 4
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+  -
+    id: 4
+    timestamp: 1
+    config:
+      -
+        id: 1
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+      -
+        id: 4
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+  -
+    id: 5
+    timestamp: 1
+    config:
+      -
+        id: 1
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+      -
+        id: 4
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+  -
+    id: 6
+    timestamp: 1
+    config:
+      -
+        id: 1
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+      -
+        id: 4
+        action: 1
+        rules:
+          -
+            variable: "IP"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+          - variable: "URI"
+            operator: "ip_conatains"
+            pattern: "pattern"
+            header: ""
+
+
 
 #END

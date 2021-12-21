@@ -1,5 +1,5 @@
 local type = type
-local paris = pairs
+local ipairs = ipairs
 local tostring = tostring
 local tonumber = tonumber
 local require = require
@@ -76,7 +76,7 @@ function _M.init_worker(ss_config)
     end
 
     if module.local_config.log.kafka and module.local_config.log.kafka.broker ~= nil then
-        for _, item in pairs(module.local_config.log.kafka.broker) do
+        for _, item in ipairs(module.local_config.log.kafka.broker) do
             tab_insert(broker_list, item)
         end
         if #broker_list == 0 then
@@ -92,7 +92,7 @@ end
 
 local function construct_radix(configs)
     local radix_items = {}
-    for _, item in pairs(configs) do
+    for _, item in ipairs(configs) do
         local obj = {
             paths = { item.uri},
             methods = { item.method },

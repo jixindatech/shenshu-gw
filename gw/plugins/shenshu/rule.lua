@@ -1,16 +1,21 @@
 local type = type
+local typeof = require "typeof"
+local ipairs = ipairs
 local tostring = tostring
 local require = require
 local tab_insert = table.insert
+local tablepool = require("tablepool")
 local cjson = require("cjson.safe")
 local producer = require "resty.kafka.producer"
 local logger = require("resty.logger.socket")
 local config = require("gw.core.config")
-
+local specific = require("gw.plugins.shenshu.specific_rule")
+local operator = require("gw.plugins.shenshu.rule.operator")
+local collections = require("gw.core.collections")
 local ngx = ngx
 
 local module = {}
-local module_name = "ip"
+local module_name = "shenshu_rule"
 local forbidden_code
 local broker_list = {}
 local kafka_topic = ""
@@ -19,7 +24,7 @@ local _M = { version = "0.1"}
 
 _M.name = module_name
 
-local ip_schema = {
+local rule_schema = {
     type = "object",
     properties = {
         id = {
@@ -30,6 +35,14 @@ local ip_schema = {
             type = "object",
             properties = {
                 action = { type = "integer" },
+                decoders = {
+                    type = "object",
+                    properties = {
+                        form = { type = "boolean", default = false},
+                        json = { type = "boolean", default = false},
+                        multipart = { type = "boolean", default = false}
+                    }
+                },
                 batch = {
                     type = "array",
                     items = {
@@ -41,14 +54,6 @@ local ip_schema = {
                     items = {
                         type = "integer"
                     }
-                },
-                decoders = {
-                    type = "object",
-                    properties = {
-                        form = { type = "boolean", default = false},
-                        json = { type = "boolean", default = false},
-                        multipart = { type = "boolean", default = false}
-                    }
                 }
             }
         }
@@ -58,7 +63,7 @@ local ip_schema = {
 function _M.init_worker(ss_config)
     local options = {
         key = module_name,
-        schema = ip_schema,
+        schema = rule_schema,
         automatic = true,
         interval = 10,
     }
@@ -90,8 +95,60 @@ function _M.init_worker(ss_config)
     return nil
 end
 
-function _M.access(ctx)
+local function _rules_match(rule, opts)
+    local ok, text = false, ""
 
+    if typeof.table(rule.variable) then
+        for _, v in ipairs(rule.variable) do
+            ok, text = _rules_match(rule, opts)
+            if ok then
+                break
+            end
+        end
+    else
+        ok, text = operator[rule.operator](opts, rule.variable, rule.pattern)
+    end
+
+    return ok, text
+end
+
+function _M.access(ctx)
+    local route = ctx.matched_route
+    local rules = module:get(route.id)
+    if rules.value ~= nil then
+        if rules.value.matcher == nil then
+            local match_rules, err =specific.get_rules(rules.value.specific)
+            if err ~= nil then
+                return false, err
+            end
+            rules.value.speicifc_rules = match_rules
+        end
+
+        local request = tablepool.fetch("rule_collections", 0, 32)
+        collections.lookup["access"](rules, request, ctx)
+
+        for _, rule in ipairs(rules.value.specific_rule) do
+            local text, variable
+            local pattern  = rule.pattern
+
+            if rule.variable == "REQ_HEADER" then
+                variable = request.REQUEST_HEADERS[rule.header]
+            elseif rule.variable == "FILE_NAMES" then
+                variable = request.FILES_NAMES
+            elseif rule.variable == "FILE" then
+                variable = request.FILES_TMP_CONTENT
+            else
+                variable = request[rule.variable]
+            end
+
+            local ok
+            ok, text = _rules_match(rule, rules)
+            if ok ~= true then
+                break
+            end
+
+        end
+    end
 end
 
 local function file(msg)
@@ -137,6 +194,7 @@ local function kafkalog(msg)
 end
 
 function _M.log(ctx)
+    tablepool.release("rule_collections", ctx)
     local msg = ctx.gw_msg
     if msg ~= nil then
         if module and module.local_config.log.file then
