@@ -42,11 +42,11 @@ function _M.init_worker()
 
     module.local_config = yaml_config
 
-    err = ip.init_worker(yaml_confi)
+    err = ip.init_worker(yaml_config)
     if err ~= nil then
         return err
     end
-
+    --[[
     err = cc.init_worker(yaml_confi)
     if err ~= nil then
         return err
@@ -61,15 +61,27 @@ function _M.init_worker()
     if err ~= nil then
         return err
     end
-
+    ]]--
 end
 
 function _M.access(ctx)
-    local status
+    local status, err = ip.access(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, "err:" .. err)
+    end
 
-    status = ip.access(ctx)
+    if ctx.ip_denied then
+        ngx.log(ngx.ERR, "ip denied")
+    end
+
+    if ctx.ip_allowed then
+        ngx.log(ngx.ERR, "ip allowd")
+    end
+
+    --[[
     status = cc.access(ctx)
     status = rule.access(ctx)
+    ]]--
 end
 
 function _M.log(ctx)

@@ -27,6 +27,7 @@ dependencies = {
     "jsonschema = 0.9.5",
     "nxx-lua-resty-cookie = 0.2.0-1",
     "lua-resty-upload = 0.09-2",
+    "lua-resty-ipmatcher = 0.6.1-0",
 }
 
 build = {

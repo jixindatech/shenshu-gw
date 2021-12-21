@@ -1,6 +1,8 @@
 local type = type
 local tostring = tostring
 local require = require
+local ipmatcher = require("resty.ipmatcher")
+local schema = require("gw.schema")
 local tab_insert = table.insert
 local cjson = require("cjson.safe")
 local producer = require "resty.kafka.producer"
@@ -10,7 +12,7 @@ local config = require("gw.core.config")
 local ngx = ngx
 
 local module = {}
-local module_name = "ip"
+local module_name = "shenshu_ip"
 local forbidden_code
 local broker_list = {}
 local kafka_topic = ""
@@ -22,10 +24,8 @@ _M.name = module_name
 local ip_schema = {
     type = "object",
     properties = {
-        id = {
-            type = "integer",
-            minimum = 1
-        },
+        id = schema.id_shema,
+        timestamp = schema.id_shema,
         config = {
             type = "object",
             properties = {
@@ -82,7 +82,42 @@ function _M.init_worker(ss_config)
 end
 
 function _M.access(ctx)
+    ctx.ip = "1.1.1.1"
 
+    local route = ctx.matched_route.value
+    local ips = module:get(route.id)
+    if ips.value.allow ~= nil then
+        if ips.value.allow_matcher == nil then
+            local matcher, err = ipmatcher.new(ips.value.allow)
+            if err ~= nil then
+                return false, err
+            end
+            ips.value.allow_matcher = matcher
+        end
+        local ok, err = ips.value.allow_matcher:match(ctx.ip)
+        if ok then
+            ctx.ip_allowed = true
+            return true, nil
+        end
+    end
+
+    if ips.value.deny ~= nil then
+        if ips.value.deny_matcher == nil then
+            local matcher, err = ipmatcher.new(ips.value.deny)
+            if err ~= nil then
+                return false, err
+            end
+            ips.value.deny_matcher = matcher
+        end
+
+        local ok, err = ips.value.deny_matcher:match(ctx.ip)
+        if ok then
+            ctx.ip_denied = true
+            return true, nil
+        end
+    end
+
+    return true, nil
 end
 
 local function file(msg)

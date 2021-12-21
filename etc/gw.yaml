@@ -174,4 +174,22 @@ gw:
           methods:
             - GET
             - POST
+
+shenshu_ip:
+  -
+    id: 1
+    timestamp: 1
+    config:
+      allow:
+        - "1.1.1.1"
+        - "2.2.2.2"
+      deny:
+        - "3.3.3.3"
+        - "4.4.4.4"
+  - id: 2
+    timestamp: 1
+    config:
+      allow:
+        - "5.1.1.1"
+        - "6.2.2.2"
 #END
