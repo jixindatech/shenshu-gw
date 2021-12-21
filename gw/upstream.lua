@@ -55,7 +55,7 @@ local function create_checker(upstream)
     })
 
     local host = upstream.checks and upstream.checks.host
-    for addr, weight in pairs(upstream.nodes) do
+    for addr, weight in pairs(upstream.value.nodes) do
         local ip, port = ip.parse_addr(addr)
         local ok, err = checker:add_target(ip, port, host, true)
         if not ok then
@@ -87,14 +87,14 @@ end
 
 local function get_health_nodes(upstream, checker)
     if not checker then
-        return upstream.nodes
+        return upstream.value.nodes
     end
 
     local host = upstream.checks and upstream.checks.host
     local up_nodes = {}
 
     local count = 0
-    for addr, weight in pairs(upstream.nodes) do
+    for addr, weight in pairs(upstream.value.nodes) do
         local ip, port = ip.parse_addr(addr)
         local ok, err = checker:get_target_status(ip, port, host)
         if ok then
@@ -107,7 +107,7 @@ local function get_health_nodes(upstream, checker)
 
     if count == 0 then
         ngx.log(ngx.ERR, "all upstream nodes is unhealth, use default")
-        up_nodes = upstream.nodes
+        up_nodes = upstream.value.nodes
     end
 
     return up_nodes
@@ -123,7 +123,7 @@ local function get_upstream_healthchecker(upstream)
 end
 
 local function get_server_picker(upstream, checker, version)
-    local key = upstream.type .. "#upstream_" .. upstream.id
+    local key = upstream.value.type .. "#upstream_" .. upstream.id
     if picker_cache  then
         local picker = picker_cache:get(key)
         if picker and picker._cache_ver == version then
@@ -135,7 +135,7 @@ local function get_server_picker(upstream, checker, version)
 
     local obj
     local up_nodes = get_health_nodes(upstream, checker)
-    if upstream.type == "roundrobin" then
+    if upstream.value.type == "roundrobin" then
         local picker = roundrobin:new(up_nodes)
         obj =  {
             upstream = upstream,
@@ -145,7 +145,7 @@ local function get_server_picker(upstream, checker, version)
         }
     end
 
-    if upstream.type == "chash" then
+    if upstream.value.type == "chash" then
         local str_null = str_char(0)
 
         local count = 0
@@ -196,7 +196,7 @@ function _M.get(ctx, id)
     end
 
     local version = upstream_item.modifiedIndex
-    local upstream = upstream_item.value
+    local upstream = upstream_item
 
     local checker
     if upstream.checks then

@@ -2,6 +2,7 @@ local byte = string.byte
 local type = type
 local ipairs = ipairs
 local pairs = pairs
+local loadstring = loadstring
 local tab_insert = table.insert
 local tab_clear = table.clear
 local cjson = require("cjson.safe")
@@ -65,8 +66,21 @@ local function push_host_router(route, host_routes, only_uri_routes)
         return
     end
 
-    local hosts = route.value.hosts or {route.value.host}
+    local filter_fun, err
+    if route.value.filter_func then
+        filter_fun, err = loadstring(
+                "return " .. route.value.filter_func,
+                "router#" .. route.value.id)
+        if not filter_fun then
+            ngx.log(ngx.ERR, "failed to load filter function: ", err,
+                    " route id: ", route.value.id)
+            return
+        end
 
+        filter_fun = filter_fun()
+    end
+
+    local hosts = route.value.hosts or {route.value.host}
     local radixtree_route = {
         paths = route.value.uris or route.value.uri,
         methods = route.value.methods,

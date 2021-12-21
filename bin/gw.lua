@@ -148,6 +148,8 @@ http {
 
     lua_shared_dict upstream-healthcheck 10m;
     lua_shared_dict worker-events        10m;
+    lua_shared_dict cc_limit_req_store   10m;
+    lua_shared_dict cc_limit_conn_store  10m;
 
     lua_ssl_verify_depth 5;
     ssl_session_timeout 86400;

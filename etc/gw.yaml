@@ -192,4 +192,37 @@ shenshu_ip:
       allow:
         - "5.1.1.1"
         - "6.2.2.2"
+shenshu_cc:
+  -
+    id: 1
+    timestamp: 1
+    config:
+      -
+        action: "captchar"
+        duration: 10
+        match: "str_equal"
+        method: "GET"
+        mode: "ip"
+        threshold: 2
+        uri: "/login"
+      - action: "captchar"
+        duration: 10
+        match: "str_equal"
+        method: "GET"
+        mode: "ip"
+        threshold: 10
+        uri: "/logout"
+  -
+    id: 2
+    timestamp: 1
+    config:
+      -
+        action: "400"
+        duration: 10
+        match: "str_equal"
+        method: "POST"
+        mode: "ip"
+        threshold: 10
+        uri: "/login"
+
 #END

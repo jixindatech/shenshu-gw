@@ -84,7 +84,7 @@ end
 function _M.access(ctx)
     ctx.ip = "1.1.1.1"
 
-    local route = ctx.matched_route.value
+    local route = ctx.matched_route
     local ips = module:get(route.id)
     if ips.value.allow ~= nil then
         if ips.value.allow_matcher == nil then

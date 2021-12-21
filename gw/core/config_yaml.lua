@@ -145,8 +145,8 @@ local function sync_data(self)
         if data_valid then
             tab_insert(values, conf_item)
             values_hash[key] = #values
-            conf_item.value.id = tostring(item.id)
-            conf_item.value.clean_handlers = {}
+            conf_item.id = tostring(item.id)
+            conf_item.clean_handlers = {}
 
             if self.init_func then
                 self.init_func(conf_item)
@@ -161,8 +161,8 @@ local function sync_data(self)
     if self.values then
         for _, item in ipairs(self.values) do
             if item.value and item.release then
-                if item.value.clean_handlers then
-                    for _, clean_handler in ipairs(item.value.clean_handlers) do
+                if item.clean_handlers then
+                    for _, clean_handler in ipairs(item.clean_handlers) do
                         clean_handler(item)
                     end
                     item.value.clean_handlers = nil
