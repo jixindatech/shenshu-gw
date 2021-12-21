@@ -24,8 +24,8 @@ _M.name = module_name
 local ip_schema = {
     type = "object",
     properties = {
-        id = schema.id_shema,
-        timestamp = schema.id_shema,
+        id = schema.id_schema,
+        timestamp = schema.id_schema,
         config = {
             type = "object",
             properties = {
@@ -42,7 +42,8 @@ local ip_schema = {
                     }
                 }
             }
-        }
+        },
+        required = {"id", "timestamp", "config"}
     }
 }
 

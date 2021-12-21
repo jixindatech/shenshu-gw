@@ -6,7 +6,8 @@ local require = require
 local tab_insert = table.insert
 local tablepool = require("tablepool")
 local cjson = require("cjson.safe")
-local producer = require "resty.kafka.producer"
+local schema = require("gw.schema")
+local producer = require("resty.kafka.producer")
 local logger = require("resty.logger.socket")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
@@ -27,10 +28,8 @@ _M.name = module_name
 local rule_schema = {
     type = "object",
     properties = {
-        id = {
-            type = "integer",
-            minimum = 1
-        },
+        id = schema.id_schema,
+        timestamp = schema.id_schema,
         config = {
             type = "object",
             properties = {
@@ -45,15 +44,11 @@ local rule_schema = {
                 },
                 batch = {
                     type = "array",
-                    items = {
-                        type = "integer"
-                    }
+                    items = schema.id_schema,
                 },
                 specific = {
                     type = "array",
-                    items = {
-                        type = "integer"
-                    }
+                    items = schema.id_schema,
                 }
             }
         }

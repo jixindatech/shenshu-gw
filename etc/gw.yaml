@@ -246,32 +246,18 @@ shenshu_specific_rule:
     id: 1
     timestamp: 1
     config:
-      -
-        id: 1
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-      -
-        id: 4
-        action: 1
-        rules:
-          -
-            variable: "IP"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
-          - variable: "URI"
-            operator: "ip_conatains"
-            pattern: "pattern"
-            header: ""
+      id: 1
+      action: 1
+      rules:
+        -
+          variable: "IP"
+          operator: "ip_conatains"
+          pattern: "pattern"
+          header: ""
+        - variable: "URI"
+          operator: "ip_conatains"
+          pattern: "pattern"
+          header: ""
   -
     id: 4
     timestamp: 1

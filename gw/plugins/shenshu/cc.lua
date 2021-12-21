@@ -5,7 +5,7 @@ local tonumber = tonumber
 local require = require
 local tab_insert = table.insert
 local tab_clear = table.clear
-
+local schema = require("gw.schema")
 local cjson = require("cjson.safe")
 local radix = require("resty.radixtree")
 local limit_conn = require("resty.limit.conn")
@@ -33,10 +33,8 @@ _M.name = module_name
 local cc_schema = {
     type = "object",
     properties = {
-        id = {
-            type = "integer",
-            minimum = 1
-        },
+        id = schema.id_schema,
+        timestamp = schema.id_schema,
         config = {
             type = "array",
             items = {
@@ -51,7 +49,8 @@ local cc_schema = {
                     uri = { type = "string" }
                 }
             }
-        }
+        },
+        required = {"id", "timestamp", "config"}
     }
 }
 

@@ -2,6 +2,7 @@ local type = type
 local tostring = tostring
 local require = require
 local tab_insert = table.insert
+local schema = require("gw.schema")
 local cjson = require("cjson.safe")
 local producer = require "resty.kafka.producer"
 local logger = require("resty.logger.socket")
@@ -19,6 +20,29 @@ _M.name = module_name
 local specific_schema = {
     type = "object",
     properties = {
+        id = schema.id_schema,
+        timestamp = schema.id_schema,
+        config = {
+            type = "object",
+            properties = {
+                action = schema.id_schema,
+                rules = {
+                    type = "array",
+                    items = {
+                        type = "object",
+                        properties = {
+                            variable = { type = "string"},
+                            operator = { type = "string"},
+                            pattern = { type = "string"},
+                            header = { type = "string"}
+                        },
+                        required = {"variable", "operator", "pattern", "header"}
+                    }
+                },
+                required = {"action", "rules"}
+            }
+        },
+        required = {"id", "timestamp", "config"}
     }
 }
 
