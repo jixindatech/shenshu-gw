@@ -50,6 +50,16 @@ ifneq ($(LUAROCKS_SERVER), )
 	LUAROCKS_SERVER_OPT = --server ${LUAROCKS_SERVER}
 endif
 
+C_LIBS     = libinjection
+MAKE_LIBS  = $(C_LIBS)
+
+.PHONY: all libinjection
+all: $(MAKE_LIBS)
+
+libinjection:
+	cd $@ && make all
+	cp $@/src/$@.so gw/
+
 SHELL := /bin/bash -o pipefail
 
 VERSION ?= latest
