@@ -1,5 +1,6 @@
 local _M = {}
 
+local cjson = require("cjson.safe")
 local cookie = require "resty.cookie"
 local upload	= require "resty.upload"
 
@@ -8,6 +9,17 @@ local tab   = require "gw.core.table"
 
 local tab_insert = table.insert
 local tab_concat = table.concat
+
+function _M.get_request_body()
+    ngx.req.read_body()
+
+    if ngx.req.get_body_file() == nil then
+        return ngx.req.get_body_data()
+    else
+        return nil
+    end
+
+end
 
 function _M.parse_request_body(config, request_headers, collections)
     local content_type_header = request_headers["content-type"]
@@ -35,14 +47,14 @@ function _M.parse_request_body(config, request_headers, collections)
     -- multipart/form-data requests will be streamed in via lua-resty-upload,
     -- which provides some basic sanity checking as far as form and protocol goes
     -- (but its much less strict that ModSecurity's strict checking)
-    if ngx.re.find(content_type_header, [=[^multipart/form-data; boundary=]=], config._pcre_flags) then
-        if not config._process_multipart_body then
+    if ngx.re.find(content_type_header, [=[^multipart/form-data; boundary=]=], 'oij') then
+        if not config.decoders.multipart then
             return
         end
 
         local form, err = upload:new()
         if not form then
-            logger.warn(config, "failed to parse multipart request: ", err)
+            logger.warn("failed to parse multipart request: ", err)
             ngx.exit(400) -- may move this into a ruleset along with other strict checking
         end
 
@@ -125,7 +137,7 @@ function _M.parse_request_body(config, request_headers, collections)
         collections.FILES_COMBINED_SIZE = files_size
 
         return nil
-    elseif ngx.re.find(content_type_header, [=[^application/x-www-form-urlencoded]=], config._pcre_flags) then
+    elseif ngx.re.find(content_type_header, [=[^application/x-www-form-urlencoded]=], 'oij') and config.decoders.form then
         -- use the underlying ngx API to read the request body
         -- ignore processing the request body if the content length is larger than client_body_buffer_size
         -- to avoid wasting resources on ruleset matching of very large data sets
@@ -137,23 +149,16 @@ function _M.parse_request_body(config, request_headers, collections)
             --_LOG_"Request body size larger than client_body_buffer_size, ignoring request body"
             return nil
         end
-    elseif tab.table_has_key(content_type_header, config._allowed_content_types) then
-        -- if the content type has been whitelisted by the user, set REQUEST_BODY as a string
+    elseif ngx.re.find(content_type_header, [=[^content_type=application/json]=], 'oij') and config.decoders.json then
         ngx.req.read_body()
 
         if ngx.req.get_body_file() == nil then
-            return ngx.req.get_body_data()
+            local body = ngx.req.get_body_data()
+            cjson.encode_empty_table_as_object(false)
+            return cjson.decode(body)
         else
             --_LOG_"Request body size larger than client_body_buffer_size, ignoring request body"
             return nil
-        end
-    else
-        if config._allow_unknown_content_types then
-            --_LOG_"Allowing request with content type " .. tostring(content_type_header)
-            return nil
-        else
-            --_LOG_tostring(content_type_header) .. " not a valid content type!"
-            ngx.exit(ngx.HTTP_FORBIDDEN)
         end
     end
 end
@@ -177,7 +182,7 @@ function _M.request_uri_raw(request_line, method)
 end
 
 function _M.basename(config, uri)
-    local m = ngx.re.match(uri, [=[(/[^/]*+)+]=], config._pcre_flags)
+    local m = ngx.re.match(uri, [=[(/[^/]*+)+]=], 'oij')
     return m[1]
 end
 

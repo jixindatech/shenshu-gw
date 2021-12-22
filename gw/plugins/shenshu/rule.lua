@@ -12,8 +12,12 @@ local logger = require("resty.logger.socket")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
 local operator = require("gw.plugins.shenshu.rule.operator")
+local request = require("gw.core.request")
 local collections = require("gw.core.collections")
+local action = require("gw.plugins.shenshu.rule.action")
+
 local ngx = ngx
+local ngx_now = ngx.now
 
 local module = {}
 local module_name = "shenshu_rule"
@@ -119,27 +123,63 @@ function _M.access(ctx)
             rules.value.specific_rules = match_rules
         end
 
-        local request = tablepool.fetch("rule_collections", 0, 32)
+        ctx.rules_matched_events = {}
+
+        local params = tablepool.fetch("rule_collections", 0, 32)
         collections.lookup["access"](rules, request, ctx)
 
+        local config_action = rules.action
         for _, item in ipairs(rules.value.specific_rules) do
-            local action = item.action
+            local rule_action = item.action
+            local matched = false
             for _, rule in ipairs(item.rules) do
                 local text, variable
 
                 if rule.variable == "REQ_HEADER" then
-                    variable = request.REQUEST_HEADERS[rule.header]
+                    variable = params.REQUEST_HEADERS[rule.header]
                 elseif rule.variable == "FILE_NAMES" then
-                    variable = request.FILES_NAMES
+                    variable = params.FILES_NAMES
                 elseif rule.variable == "FILE" then
-                    variable = request.FILES_TMP_CONTENT
+                    variable = params.FILES_TMP_CONTENT
+                elseif rule.variable == "REQUEST_BODY" then
+                    variable = request.get_request_body()
                 else
-                    variable = request[rule.variable]
+                    variable = params[rule.variable]
                 end
 
-                local ok
-                ok, text = rules_match(rule, variable, rules)
-                if ok ~= true then
+                matched, text = rules_match(rule, variable, rules)
+                if matched ~= true then
+                    break
+                end
+
+                local event = {
+                    host = ctx.var.host,
+                    ip = ctx.var.ip,
+                    timestamp = ngx_now(),
+                    uri = ctx.var.uri,
+                    method = ctx.var.method,
+                    id = rule.id,
+                    info = rule.msg,
+                    text = text,
+                }
+
+                tab_insert(ctx.rules_matched_events, event)
+            end
+
+            if matched then
+                if rule_action == action.ALLOW then
+                    ctx.rules_action = action.ALLOW
+                    break
+                end
+
+                if rule_action == action.LOG then
+                    ctx.rules_action = action.LOG
+                else
+                    ctx.rules_action = action.DENY
+                end
+
+                if rules.short_circuit == 1 then
+                    ctx.rules_short_circuit = 1
                     break
                 end
             end
@@ -191,18 +231,20 @@ end
 
 function _M.log(ctx)
     tablepool.release("rule_collections", ctx)
-    local msg = ctx.gw_msg
-    if msg ~= nil then
-        if module and module.local_config.log.file then
-            file(msg)
-        end
+    if ctx.rules_matched_events and #ctx.rules_matched_events > 0 then
+        local msg = ctx.rules_matched_events
+        if msg ~= nil then
+            if module and module.local_config.log.file then
+                file(msg)
+            end
 
-        if module and module.local_config.log.rsyslog then
-            rsyslog(msg)
-        end
+            if module and module.local_config.log.rsyslog then
+                rsyslog(msg)
+            end
 
-        if module and module.local_config.log.kafka then
-            kafkalog(msg)
+            if module and module.local_config.log.kafka then
+                kafkalog(msg)
+            end
         end
     end
 end

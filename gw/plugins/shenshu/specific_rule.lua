@@ -26,6 +26,7 @@ local specific_schema = {
             type = "object",
             properties = {
                 action = schema.id_schema,
+                msg = { type = "string" },
                 rules = {
                     type = "array",
                     items = {

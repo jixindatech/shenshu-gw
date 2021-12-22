@@ -229,7 +229,8 @@ shenshu_rule:
     id: 1
     timestamp: 1
     config:
-      action: 1
+      action: 2
+      short_circuit: 1
       decoders:
         form: true
         json: true
@@ -247,7 +248,8 @@ shenshu_specific_rule:
     timestamp: 1
     config:
       id: 1
-      action: 1
+      action: 2
+      msg: "test1"
       rules:
         -
           variable: "IP"
@@ -262,7 +264,8 @@ shenshu_specific_rule:
     id: 4
     timestamp: 1
     config:
-      action: 1
+      action: 2
+      msg: "test2"
       rules:
         -
           variable: "URI"
@@ -278,7 +281,8 @@ shenshu_specific_rule:
     id: 5
     timestamp: 1
     config:
-      action: 1
+      action: 2
+      msg: "test3"
       rules:
         -
           variable: "URI"
