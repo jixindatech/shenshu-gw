@@ -28,7 +28,8 @@ dependencies = {
     "nxx-lua-resty-cookie = 0.2.0-1",
     "lua-resty-upload = 0.09-2",
     "lua-resty-ipmatcher = 0.6.1-0",
-    "lua-typeof = 0.1-0"
+    "lua-typeof = 0.1-0",
+    "lua-ffi-libinjection = 1.0-2",
 }
 
 build = {

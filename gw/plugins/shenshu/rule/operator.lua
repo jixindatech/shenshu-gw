@@ -3,7 +3,7 @@ local ipairs = iparis
 local require = require
 
 local tab      = require("gw.core.table")
---local libinject = require("resty.libinjection")
+local libinject = require("resty.libinjection")
 
 local string_find = string.find
 local string_sub  = string.sub
@@ -237,7 +237,7 @@ function _M.refind(config, subject, pattern)
 
     return match, from
 end
---[[
+
 function _M.detect_sqli(input)
     if type(input) == 'table' then
         for _, v in ipairs(input) do
@@ -277,7 +277,7 @@ function _M.detect_xss(input)
 
     return false, nil
 end
-]]--
+
 function _M.str_match(input, pattern)
     if type(input) == 'table' then
         for _, v in ipairs(input) do
@@ -332,8 +332,8 @@ _M.lookup = {
     CONTAINS     = function(config, collection, pattern) return _M.contains(collection, pattern) end,
     STR_EXISTS   = function(config, collection, pattern) return _M.str_find(config, pattern, collection) end,
     STR_CONTAINS = function(config, collection, pattern) return _M.str_find(config, collection, pattern) end,
-    --DETECT_SQLI  = function(config, collection, pattern) return _M.detect_sqli(collection) end,
-    --DETECT_XSS   = function(config, collection, pattern) return _M.detect_xss(collection) end,
+    DETECT_SQLI  = function(config, collection, pattern) return _M.detect_sqli(collection) end,
+    DETECT_XSS   = function(config, collection, pattern) return _M.detect_xss(collection) end,
     STR_MATCH    = function(config, collection, pattern) return _M.str_match(collection, pattern) end,
 }
 
