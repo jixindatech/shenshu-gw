@@ -113,7 +113,7 @@ local function rules_match(rule, variable, opts)
     local ok, text = false, ""
     if typeof.table(rule.variable) then
         for _, v in ipairs(rule.variable) do
-            ok, text = rules_match(rule, opts)
+            ok, text = rules_match(rule, v, opts)
             if ok then
                 break
             end
@@ -162,7 +162,10 @@ function _M.access(ctx)
                 else
                     variable = params[rule.variable]
                 end
+                ngx.log(ngx.ERR, rule.variable)
+                ngx.log(ngx.ERR, cjson.encode(params))
 
+                ngx.log(ngx.ERR, "var:" .. variable)
                 matched, text = rules_match(rule, variable, rules)
                 if matched ~= true then
                     break

@@ -12,10 +12,12 @@ local ngx_sleep    = ngx.sleep
 local ngx_timer_at = ngx.timer.at
 local ngx_time     = ngx.time
 local exiting      = ngx.worker.exiting
-local ztgw_schema       = require("gw.schema")
+local schema       = require("gw.schema")
 
 local cjson = require("cjson.safe")
 local redis = require("resty.redis")
+
+local key_prefix = "/admin/"
 
 local _M = { version= 0.1 }
 
@@ -93,61 +95,84 @@ local function sync_data(self)
         return
     end
 
-    if self.values then
-        for _, item in ipairs(self.values) do
-            if item then
-                if item.clean_handlers then
-                    for _, clean_handler in ipairs(item.clean_handlers) do
-                        clean_handler(item)
-                    end
-                    item.clean_handlers = nil
-                end
-            end
-        end
-        self.values = nil
-    end
-
     local items = data.values or {}
-    self.values = new_tab(#items, 0)
-    self.values_hash = new_tab(0, #items)
+    local values = new_tab(#items, 0)
+    local values_hash = new_tab(0, #items)
 
     local changed = false
     for i, item in ipairs(items) do
-        local id = tostring(i)
-        local key = item.id or "arr_" .. i
+        --[[primary key is id or name, must be unique]]--
+        local id = item.id or item.name
+        if id == nil then
+            ngx.log(ngx.ERR, "invalid data format, missing id")
+            return
+        end
 
         local data_valid = true
         if type(item) ~= "table" then
             data_valid = false
-            ngx.log(ngx.ERR, "type:" .. type(item))
-            --ngx.log(ngx.ERR, "invalid item data of [", self.key .. "/" .. key, "], val: ", cjson.encode(item), ", it shoud be a object")
+            ngx.log(ngx.ERR, "invalid item data of [", self.key .. "/" .. id,
+                    "], val: ", json.delay_encode(item),
+                    ", it shoud be a object")
+            return
         end
 
-        local conf_item = {value = item, modifiedIndex = data.timestamp, key = "/" .. self.key .. "/" .. key}
-
         if data_valid and self.schema then
-            data_valid, err = ztgw_schema.check(self.schema, item)
+            data_valid, err = schema.check(self.schema, item)
             if not data_valid then
-                ngx.log(ngx.ERR, cjson.encode(item))
-                ngx.log(ngx.ERR, "failed to check item data of [", self.key, "] err:", err)
-                --ngx.log(ngx.ERR, "failed to check item data of [", self.key, "] err:", err, " ,val: ", cjson.encode(item))
+                ngx.log(ngx.ERR, "failed to check item data of [", self.key, "] err:", err, " ,val: ", json.encode(item.value))
             end
         end
 
-        if data_valid then
-            tab_insert(self.values, conf_item)
-            local item_id = conf_item.value.id or self.key .. "#" .. id
-            item_id = tostring(item_id)
-            self.values_hash[item_id] = #self.values
-            conf_item.value.id = item_id
-            conf_item.value.clean_handlers = {}
-            --ngx.log(ngx.ERR, cjson.encode(conf_item))
+        local key = "/" .. self.key .. "/" .. id
+        local origin_item = _M.get(self, id)
+        if origin_item ~= nil then
+            if origin_item.modifiedIndex == item.timestamp then
+                changed = true
+                tab_insert(values, origin_item)
+                values_hash[key] = #values
+                goto CONTINUE
+            else
+                origin_item.release = true
+            end
         end
+
+        local conf_item = {value = item.config, modifiedIndex = item.timestamp, key = key}
+
+        if data_valid then
+            changed = true
+            tab_insert(values, conf_item)
+            values_hash[key] = #values
+            conf_item.id = tostring(item.id)
+            conf_item.clean_handlers = {}
+
+            if self.init_func then
+                self.init_func(conf_item)
+            end
+        end
+
+        ngx.log(ngx.ERR, "key:" .. key .. " data:" .. cjson.encode(conf_item))
+
+        ::CONTINUE::
     end
 
-    if self.filter then
-        self.filter(items)
+    if self.values then
+        for _, item in ipairs(self.values) do
+            if item.value and item.release then
+                if item.clean_handlers then
+                    for _, clean_handler in ipairs(item.clean_handlers) do
+                        clean_handler(item)
+                    end
+                    item.value.clean_handlers = nil
+                end
+            end
+        end
+
+        self.values = nil
     end
+
+    self.values = values
+    self.values_hash = values_hash
 
     if changed then
         self.timestamp = data.timestamp or ngx_time()
@@ -190,11 +215,12 @@ local function _automatic_fetch(premature, self)
     end
 end
 
-function _M.get(self, key)
+function _M.get(self, id)
     if not self.values_hash then
         return
     end
 
+    local key = "/" .. self.key .. "/" .. id
     local arr_idx = self.values_hash[tostring(key)]
     if not arr_idx then
         return nil
@@ -207,20 +233,22 @@ function _M.new(name, config, options)
     local automatic = options and options.automatic
     local interval = options and options.interval
     local filter_fun = options and options.filter
-    local schema = options and options.schema
+    local module_schema = options and options.schema
+
+    local key = key_prefix .. name
 
     local module = setmetatable({
         name = name,
-        key = name,
+        key = key,
         config = config,
         options = options,
         automatic = automatic,
         interval = interval,
         timestamp = nil,
         running = true,
-        conf_version = nil,
+        conf_version = 0,
         value = nil,
-        schema = schema,
+        schema = module_schema,
         filter = filter_fun,
     }, mt)
 

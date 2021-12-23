@@ -26,11 +26,10 @@ local batchrule_schema = {
         config = {
             type="object",
             properties = {
-                action = schema.id_schema,
                 msg = { type = "string" },
                 pattern = { type = "string" }
             },
-            required={"action", "pattern"}
+            required={"pattern"}
         },
         required={"id", "timestamp", "config"}
     }

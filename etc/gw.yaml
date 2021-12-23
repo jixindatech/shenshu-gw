@@ -297,21 +297,18 @@ shenshu_batch_rule:
   id: 1
   timestamp: 1
   config:
-    action: 2
     msg: "123"
     pattern: "123"
 -
   id: 2
   timestamp: 1
   config:
-    action: 2
     msg: "456"
     pattern: "456"
 -
   id: 3
   timestamp: 1
   config:
-    action: 2
     msg: "789"
     pattern: "789"
 

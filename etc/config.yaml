@@ -4,7 +4,7 @@ redis:
   password: 123456
   db: 0
 
-config_type: yaml
+config_type: redis
 gw:
   node_listen: 9080              # listening port
   enable_heartbeat: true

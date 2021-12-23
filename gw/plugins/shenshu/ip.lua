@@ -45,7 +45,7 @@ local ip_schema = {
     }
 }
 
-function _M.init_worker(ss_config)
+function _M.init_worker(ip_config)
     local options = {
         key = module_name,
         schema = ip_schema,
@@ -53,19 +53,19 @@ function _M.init_worker(ss_config)
         interval = 10,
     }
 
+    if ip_config == nil then
+        return "gw config log is missing"
+    end
+
     local err
     module, err = config.new(module_name, options)
     if err ~= nil then
         return err
     end
 
-    module.local_config = ss_config
+    module.local_config = ip_config
 
-    if module.local_config.log == nil then
-        return "gw config log is missing"
-    end
-
-    if module.local_config.log.kafka and module.local_config.log.kafka.broker ~= nil then
+    if module.local_config.kafka and module.local_config.kafka.broker ~= nil then
         for _, item in ipairs(module.local_config.log.kafka.broker) do
             tab_insert(broker_list, item)
         end
@@ -73,7 +73,7 @@ function _M.init_worker(ss_config)
             return "kafka configuration is missing"
         end
 
-        kafka_topic = module.local_config.log.kafka.topic or "gw"
+        kafka_topic = module.local_config.kafka.topic or "shenshu_ip"
     end
 
     forbidden_code = module.local_config.deny_code or 401
@@ -121,20 +121,20 @@ end
 function _M.log(ctx)
     local msg = ctx.ip_msg
     if msg ~= nil then
-        if module and module.local_config.log.file then
+        if module and module.local_config.file then
             logger.file(msg)
         end
 
-        if module and module.local_config.log.rsyslog then
-            logger.rsyslog(msg, module.local_config.log.rsyslog.host,
-                    module.local_config.log.rsyslog.port,
-                    module.local_config.log.rsyslog.type)
+        if module and module.local_config.rsyslog then
+            logger.rsyslog(msg, module.local_config.rsyslog.host,
+                    module.local_config.rsyslog.port,
+                    module.local_config.rsyslog.type)
         end
 
-        if module and module.local_config.log.kafka then
+        if module and module.local_config.kafka then
             logger.kafkalog(msg,
-                    module.local_config.log.kafka.broker_list,
-                    module.local_config.log.kafka.topic)
+                    module.local_config.kafka.broker_list,
+                    module.local_config.kafka.topic)
         end
     end
 end

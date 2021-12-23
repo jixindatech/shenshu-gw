@@ -1,6 +1,7 @@
 local require = require
 local lfs   = require("lfs")
 local yaml  = require("tinyyaml")
+local cjson = require("cjson.safe")
 
 local ip = require("gw.plugins.shenshu.ip")
 local cc = require("gw.plugins.shenshu.cc")
@@ -22,14 +23,14 @@ function _M.init_worker()
     attributes, err = lfs.attributes(conf_file)
     if not attributes then
         ngx.log(ngx.ERR, "failed to fetch ", conf_file, " attributes: ", err)
-        return
+        return false, err
     end
 
     local f
     f, err = io.open(conf_file, "r")
     if not f then
         ngx.log(ngx.ERR, "failed to open file ", conf_file, " : ", err)
-        return err
+        return false, err
     end
 
     local yaml_data = f:read("*a")
@@ -37,34 +38,34 @@ function _M.init_worker()
 
     local yaml_config = yaml.parse(yaml_data)
     if not yaml_config then
-        return err
+        return false, err
     end
 
     module.local_config = yaml_config
 
     err = ip.init_worker(yaml_config.ip_log)
     if err ~= nil then
-        return err
+        return false, err
     end
 
     err = cc.init_worker(yaml_config.cc_log)
     if err ~= nil then
-        return err
+        return false, err
     end
 
     err = rule.init_worker(yaml_config)
     if err ~= nil then
-        return err
+        return false, err
     end
 
     err = specific_rule.init_worker()
     if err ~= nil then
-        return err
+        return false, err
     end
 
     err = batch_rule.init_worker()
     if err ~= nil then
-        return err
+        return false, err
     end
 end
 

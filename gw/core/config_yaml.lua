@@ -128,8 +128,8 @@ local function sync_data(self)
             end
         end
 
-        local key = "/" .. self.key .."/" .. id
-        local origin_item = _M.get(self, key)
+        local key = "/" .. self.key .. "/" .. id
+        local origin_item = _M.get(self, id)
         if origin_item ~= nil then
             if origin_item.modifiedIndex == item.timestamp then
                 tab_insert(values, origin_item)
