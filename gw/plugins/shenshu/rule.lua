@@ -24,8 +24,10 @@ local ngx_now = ngx.now
 local module = {}
 local module_name = "shenshu_rule"
 local forbidden_code
-local broker_list = {}
-local kafka_topic = ""
+local specific_broker_list = {}
+local specific_kafka_topic = ""
+local batch_broker_list = {}
+local batch_kafka_topic = ""
 
 local _M = { version = "0.1"}
 
@@ -77,19 +79,30 @@ function _M.init_worker(ss_config)
 
     module.local_config = ss_config
 
-    if module.local_config.log == nil then
-        return "gw config log is missing"
+    if module.local_config.specific_log == nil or module.local_config.batch_log == nil then
+        return "shenshu config log is missing"
     end
 
-    if module.local_config.log.kafka and module.local_config.log.kafka.broker ~= nil then
-        for _, item in pairs(module.local_config.log.kafka.broker) do
-            tab_insert(broker_list, item)
+    if module.local_config.specific_log.kafka and module.local_config.specific_log.kafka.broker ~= nil then
+        for _, item in pairs(module.local_config.specific_log.kafka.broker) do
+            tab_insert(specific_broker_list, item)
         end
-        if #broker_list == 0 then
+        if #specific_broker_list == 0 then
             return "kafka configuration is missing"
         end
 
-        kafka_topic = module.local_config.log.kafka.topic or "gw"
+        specific_kafka_topic = module.local_config.specific_log.kafka.topic or "shenshu_speicifc"
+    end
+
+    if module.local_config.batch_log.kafka and module.local_config.batch_log.kafka.broker ~= nil then
+        for _, item in pairs(module.local_config.batch_log.kafka.broker) do
+            tab_insert(batch_broker_list, item)
+        end
+        if #batch_broker_list == 0 then
+            return "kafka configuration is missing"
+        end
+
+        batch_kafka_topic = module.local_config.batch_log.kafka.topic or "shenshu_batch"
     end
 
     forbidden_code = module.local_config.deny_code or 401
@@ -115,6 +128,9 @@ end
 function _M.access(ctx)
     local route = ctx.matched_route
     local rules = module:get(route.id)
+    local matched = false
+    local config_action = rules.action
+
     if rules.value ~= nil then
         if rules.value.specific_rules == nil then
             local specific_rules, err =specific.get_rules(rules.value.specific)
@@ -125,15 +141,13 @@ function _M.access(ctx)
             rules.value.specific_rules = specific_rules
         end
 
-        ctx.rules_matched_events = {}
+        ctx.specific_matched_events = tab.new(0, 20)
 
         local params = tablepool.fetch("rule_collections", 0, 32)
         collections.lookup["access"](rules, params, ctx)
 
-        local config_action = rules.action
         for _, item in ipairs(rules.value.specific_rules) do
             local rule_action = item.value.action
-            local matched = false
             for _, rule in ipairs(item.value.rules) do
                 local text, variable
 
@@ -165,16 +179,17 @@ function _M.access(ctx)
                     text = text,
                 }
 
-                tab_insert(ctx.rules_matched_events, event)
+                tab_insert(ctx.specific_matched_events, event)
             end
 
             if matched then
                 if rule_action == action.ALLOW then
                     ctx.rules_action = action.ALLOW
-                    break
+                    --[[ Allow first privilege ]]--
+                    return true, nil
                 end
 
-                if rule_action == action.LOG then
+                if rule_action == action.LOG or config_action == action.LOG then
                     ctx.rules_action = action.LOG
                 else
                     ctx.rules_action = action.DENY
@@ -187,6 +202,10 @@ function _M.access(ctx)
             end
         end
 
+        if matched and rules.short_circuit == 1 then
+            return true, nil
+        end
+
         if rules.value.batch_rules == nil then
             local batch_rules, err =batch.get_rules(rules.value.batch)
             if err ~= nil then
@@ -196,44 +215,97 @@ function _M.access(ctx)
             rules.value.batch_rules = batch_rules
         end
 
-        ngx.log(ngx.ERR, cjson.encode(params))
+        ctx.batch_matched_events = tab.new(0, 20)
 
         local uri_args = tab.table_values(params.URI_ARGS)
         if #uri_args > 0 then
             local hits = rules.value.batch_rules.db:scan(uri_args, rules.value.batch_rules.scratch)
+            if #hits > 0 then
+                matched = true
+                local events = {
+                    id = hits,
+                    text = params.URI_ARGS
+                }
+                tab_insert(ctx.batch_matched_events, events)
+
+                if config_action == action.LOG then
+                    ctx.rules_action = action.LOG
+                else
+                    ctx.rules_action = action.DENY
+                end
+            end
+        end
+
+        if matched and rules.short_circuit == 1 then
+            return true, nil
         end
 
         local body_args = tab.table_values(params.BODY_ARGS)
-        if #uri_args > 0 then
+        if #body_args > 0 then
             local hits = rules.value.batch_rules.db:scan(body_args, rules.value.batch_rules.scratch)
+            if #hits > 0 then
+                local events = {
+                    id = hits,
+                    text = params.BODY_ARGS
+                }
+                tab_insert(ctx.batch_matched_events, events)
+
+                if config_action == action.LOG then
+                    ctx.rules_action = action.LOG
+                else
+                    ctx.rules_action = action.DENY
+                end
+            end
         end
 
+        return true, nil
     end
 end
 
 
 function _M.log(ctx)
     tablepool.release("rule_collections", ctx)
-    if ctx.rules_matched_events and #ctx.rules_matched_events > 0 then
-        local msg = ctx.rules_matched_events
-        if msg ~= nil then
-            if module and module.local_config.log.file then
-                logger.file(msg)
-            end
-
-            if module and module.local_config.log.rsyslog then
-                logger.rsyslog(msg, module.local_config.log.rsyslog.host,
-                        module.local_config.log.rsyslog.port,
-                        module.local_config.log.rsyslog.type)
-            end
-
-            if module and module.local_config.log.kafka then
-                logger.kafkalog(msg,
-                        module.local_config.log.kafka.broker_list,
-                        module.local_config.log.kafka.topic)
-            end
+    if ctx.specific_matched_events and #ctx.specific_matched_events > 0 then
+        if module and module.local_config.specific_log.file then
+            logger.file(ctx.specific_matched_events)
         end
+
+        if module and module.local_config.specific_log.rsyslog then
+            logger.rsyslog(ctx.specific_matched_events,
+                    module.local_config.specific_log.rsyslog.host,
+                    module.local_config.specific_log.rsyslog.port,
+                    module.local_config.specific_log.rsyslog.type)
+        end
+
+        if module and module.local_config.specific_log.kafka then
+            logger.kafkalog(ctx.specific_matched_events,
+                    specific_broker_list,
+                    specific_kafka_topic)
+        end
+
+        ctx.specific_matched_events = nil
     end
+
+    if ctx.batch_matched_events and #ctx.batch_matched_events > 0 then
+       if module and module.local_config.batch_log.file then
+          logger.file(ctx.batch_matched_events)
+       end
+
+       if module and module.local_config.specific_log.rsyslog then
+          logger.rsyslog(ctx.batch_matched_events, module.local_config.specific_log.rsyslog.host,
+                  module.local_config.batch_log.rsyslog.port,
+                  module.local_config.batch_log.rsyslog.type)
+        end
+
+       if module and module.local_config.specific_log.kafka then
+          logger.kafkalog(ctx.batch_matched_events,
+                  batch_broker_list,
+                  batch_kafka_topic)
+       end
+
+       ctx.batch_matched_events = nil
+    end
+
 end
 
 return _M

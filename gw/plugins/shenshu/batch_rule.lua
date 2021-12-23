@@ -36,7 +36,7 @@ local batchrule_schema = {
     }
 }
 
-function _M.init_worker(ss_config)
+function _M.init_worker()
     local options = {
         key = module_name,
         schema = batchrule_schema,
@@ -50,24 +50,6 @@ function _M.init_worker(ss_config)
         return err
     end
 
-    module.local_config = ss_config
-
-    if module.local_config.log == nil then
-        return "gw config log is missing"
-    end
-
-    if module.local_config.log.kafka and module.local_config.log.kafka.broker ~= nil then
-        for _, item in pairs(module.local_config.log.kafka.broker) do
-            tab_insert(broker_list, item)
-        end
-        if #broker_list == 0 then
-            return "kafka configuration is missing"
-        end
-
-        kafka_topic = module.local_config.log.kafka.topic or "gw"
-    end
-
-    forbidden_code = module.local_config.deny_code or 401
     return nil
 end
 

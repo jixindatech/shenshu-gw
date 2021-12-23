@@ -47,7 +47,7 @@ local specific_schema = {
     }
 }
 
-function _M.init_worker(ss_config)
+function _M.init_worker()
     local options = {
         key = module_name,
         schema = specific_schema,

@@ -42,12 +42,12 @@ function _M.init_worker()
 
     module.local_config = yaml_config
 
-    err = ip.init_worker(yaml_config)
+    err = ip.init_worker(yaml_config.ip_log)
     if err ~= nil then
         return err
     end
 
-    err = cc.init_worker(yaml_config)
+    err = cc.init_worker(yaml_config.cc_log)
     if err ~= nil then
         return err
     end
@@ -57,12 +57,12 @@ function _M.init_worker()
         return err
     end
 
-    err = specific_rule.init_worker(yaml_config)
+    err = specific_rule.init_worker()
     if err ~= nil then
         return err
     end
 
-    err = batch_rule.init_worker(yaml_config)
+    err = batch_rule.init_worker()
     if err ~= nil then
         return err
     end
