@@ -211,47 +211,6 @@ function _M.access(ctx)
     end
 end
 
-local function file(msg)
-    local logstr = cjson.encode(msg)
-    ngx.log(ngx.ERR, logstr)
-
-end
-
-local function rsyslog(msg)
-    if not logger.initted() then
-        local ok, err = logger.init {
-            host = module.local_config.log.rsyslog.host,
-            port = module.local_config.log.rsyslog.port,
-            sock_type = module.local_config.log.rsyslog.type,
-            flush_limit = 1,
-            --drop_limit = 5678,
-            timeout = 10000,
-            pool_size = 100
-        }
-        if not ok then
-            ngx.log(ngx.ERR, "failed to initialize the logger: ", err)
-            return
-        end
-    end
-
-    local logstr = cjson.encode(msg)
-    local bytes, err = logger.log(logstr.."\n")
-    if err then
-        ngx.log(ngx.ERR, "failed to log message: ", err)
-        return
-    end
-
-end
-
-local function kafkalog(msg)
-    local message = cjson.encode(msg)
-    local bp = producer:new(broker_list, { producer_type = "async" })
-    local ok, err = bp:send(kafka_topic, nil, message)
-    if not ok then
-        ngx.log(ngx.ERR, "kafka send err:", err)
-        return
-    end
-end
 
 function _M.log(ctx)
     tablepool.release("rule_collections", ctx)
@@ -259,15 +218,19 @@ function _M.log(ctx)
         local msg = ctx.rules_matched_events
         if msg ~= nil then
             if module and module.local_config.log.file then
-                file(msg)
+                logger.file(msg)
             end
 
             if module and module.local_config.log.rsyslog then
-                rsyslog(msg)
+                logger.rsyslog(msg, module.local_config.log.rsyslog.host,
+                        module.local_config.log.rsyslog.port,
+                        module.local_config.log.rsyslog.type)
             end
 
             if module and module.local_config.log.kafka then
-                kafkalog(msg)
+                logger.kafkalog(msg,
+                        module.local_config.log.kafka.broker_list,
+                        module.local_config.log.kafka.topic)
             end
         end
     end
