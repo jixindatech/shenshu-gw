@@ -11,10 +11,12 @@ local producer = require("resty.kafka.producer")
 local logger = require("resty.logger.socket")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
+local batch = require("gw.plugins.shenshu.batch_rule")
 local operator = require("gw.plugins.shenshu.rule.operator")
 local request = require("gw.core.request")
 local collections = require("gw.core.collections")
 local action = require("gw.plugins.shenshu.rule.action")
+local tab = require("gw.core.table")
 
 local ngx = ngx
 local ngx_now = ngx.now
@@ -115,24 +117,24 @@ function _M.access(ctx)
     local rules = module:get(route.id)
     if rules.value ~= nil then
         if rules.value.specific_rules == nil then
-            local match_rules, err =specific.get_rules(rules.value.specific)
+            local specific_rules, err =specific.get_rules(rules.value.specific)
             if err ~= nil then
                 return false, err
             end
 
-            rules.value.specific_rules = match_rules
+            rules.value.specific_rules = specific_rules
         end
 
         ctx.rules_matched_events = {}
 
         local params = tablepool.fetch("rule_collections", 0, 32)
-        collections.lookup["access"](rules, request, ctx)
+        collections.lookup["access"](rules, params, ctx)
 
         local config_action = rules.action
         for _, item in ipairs(rules.value.specific_rules) do
-            local rule_action = item.action
+            local rule_action = item.value.action
             local matched = false
-            for _, rule in ipairs(item.rules) do
+            for _, rule in ipairs(item.value.rules) do
                 local text, variable
 
                 if rule.variable == "REQ_HEADER" then
@@ -158,7 +160,7 @@ function _M.access(ctx)
                     timestamp = ngx_now(),
                     uri = ctx.var.uri,
                     method = ctx.var.method,
-                    id = rule.id,
+                    id = item.id,
                     info = rule.msg,
                     text = text,
                 }
@@ -184,6 +186,28 @@ function _M.access(ctx)
                 end
             end
         end
+
+        if rules.value.batch_rules == nil then
+            local batch_rules, err =batch.get_rules(rules.value.batch)
+            if err ~= nil then
+                return false, err
+            end
+
+            rules.value.batch_rules = batch_rules
+        end
+
+        ngx.log(ngx.ERR, cjson.encode(params))
+
+        local uri_args = tab.table_values(params.URI_ARGS)
+        if #uri_args > 0 then
+            local hits = rules.value.batch_rules.db:scan(uri_args, rules.value.batch_rules.scratch)
+        end
+
+        local body_args = tab.table_values(params.BODY_ARGS)
+        if #uri_args > 0 then
+            local hits = rules.value.batch_rules.db:scan(body_args, rules.value.batch_rules.scratch)
+        end
+
     end
 end
 

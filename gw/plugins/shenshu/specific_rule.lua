@@ -72,7 +72,7 @@ function _M.get_rules(ids)
             return nil, "not found rule id:" .. tostring(v)
         end
 
-        tab_insert(rules, rule.value)
+        tab_insert(rules, rule)
     end
 
     return rules, nil

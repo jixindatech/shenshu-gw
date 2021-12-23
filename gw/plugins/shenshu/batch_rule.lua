@@ -2,9 +2,8 @@ local type = type
 local tostring = tostring
 local require = require
 local tab_insert = table.insert
-local cjson = require("cjson.safe")
-local producer = require "resty.kafka.producer"
-local logger = require("resty.logger.socket")
+local luahs = require("luahs")
+local schema = require("gw.schema")
 local config = require("gw.core.config")
 
 local ngx = ngx
@@ -22,6 +21,18 @@ _M.name = module_name
 local batchrule_schema = {
     type = "object",
     properties = {
+        id = schema.id_schema,
+        timestamp = schema.id_schema,
+        config = {
+            type="object",
+            properties = {
+                action = schema.id_schema,
+                msg = { type = "string" },
+                pattern = { type = "string" }
+            },
+            required={"action", "pattern"}
+        },
+        required={"id", "timestamp", "config"}
     }
 }
 
@@ -60,12 +71,37 @@ function _M.init_worker(ss_config)
     return nil
 end
 
-function _M.access(ctx)
+function _M.get_rules(ids)
+    local expressions = {}
+    for _, v in ipairs(ids) do
+        local rule = module:get(v)
+        if rule == nil then
+            return nil, "not found rule id:" .. tostring(v)
+        end
 
-end
+        local expression = {
+            id  = tonumber(rule.id),
+            expression = rule.value.pattern,
+            flags = {
+                luahs.pattern_flags.HS_FLAG_CASELESS,
+                luahs.pattern_flags.HS_FLAG_DOTALL,
+            }
+        }
+        tab_insert(expressions, expression)
+    end
 
-function _M.log(ctx)
+    local db, err = luahs.compile{
+        expressions = expressions,
+        mode = luahs.compile_mode.HS_MODE_VECTORED,
+    }
 
+    if err ~= nil then
+        return nil, err
+    end
+
+    local scratch = db:makeScratch()
+
+    return {db = db, scratch = scratch}, nil
 end
 
 return _M

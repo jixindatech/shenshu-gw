@@ -247,18 +247,17 @@ shenshu_specific_rule:
     id: 1
     timestamp: 1
     config:
-      id: 1
       action: 2
       msg: "test1"
       rules:
         -
-          variable: "IP"
-          operator: "ip_conatains"
-          pattern: "pattern"
-          header: ""
+          variable: "REQ_HEADER"
+          operator: "STR_MATCH"
+          pattern: "win7"
+          header: "user-agent"
         - variable: "URI"
-          operator: "ip_conatains"
-          pattern: "pattern"
+          operator: "STR_MATCH"
+          pattern: "/logout"
           header: ""
   -
     id: 4
@@ -293,5 +292,27 @@ shenshu_specific_rule:
           header: "user-agent"
           operator: "STR_CONTAINS"
           pattern: "ios"
+shenshu_batch_rule:
+-
+  id: 1
+  timestamp: 1
+  config:
+    action: 2
+    msg: "123"
+    pattern: "123"
+-
+  id: 2
+  timestamp: 1
+  config:
+    action: 2
+    msg: "456"
+    pattern: "456"
+-
+  id: 3
+  timestamp: 1
+  config:
+    action: 2
+    msg: "789"
+    pattern: "789"
 
 #END

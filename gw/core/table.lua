@@ -3,6 +3,7 @@ local setmetatable = setmetatable
 local select       = select
 local new_tab      = require("table.new")
 local nkeys        = require("table.nkeys")
+local logger       = require("gw.core.log")
 local pairs        = pairs
 local type         = type
 
@@ -77,6 +78,10 @@ end
 
 -- return a table containing the values of the provided table
 function _M.table_values(table)
+    if table == nil then
+        return {}
+    end
+
     if type(table) ~= "table" then
         logger.fatal_fail(type(table) .. " was given to table_values!")
     end

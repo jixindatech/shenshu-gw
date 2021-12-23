@@ -57,16 +57,15 @@ function _M.init_worker()
         return err
     end
 
-    err = specific_rule.init_worker(yaml_confi)
+    err = specific_rule.init_worker(yaml_config)
     if err ~= nil then
         return err
     end
-        --[[
-        err = batch_rule.init_worker(yaml_confi)
-       if err ~= nil then
-           return err
-       end
-       ]]--
+
+    err = batch_rule.init_worker(yaml_config)
+    if err ~= nil then
+        return err
+    end
 end
 
 function _M.access(ctx)
