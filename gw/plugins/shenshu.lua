@@ -3,6 +3,7 @@ local lfs   = require("lfs")
 local yaml  = require("tinyyaml")
 local cjson = require("cjson.safe")
 
+local globalip = require("gw.plugins.shenshu.globalip")
 local ip = require("gw.plugins.shenshu.ip")
 local cc = require("gw.plugins.shenshu.cc")
 local batch_rule = require("gw.plugins.shenshu.batch_rule")
@@ -42,6 +43,11 @@ function _M.init_worker()
     end
 
     module.local_config = yaml_config
+
+    err = globalip.init_worker(yaml_config.ip_log)
+    if err ~= nil then
+        return false, err
+    end
 
     err = ip.init_worker(yaml_config.ip_log)
     if err ~= nil then
