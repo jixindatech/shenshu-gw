@@ -4,13 +4,12 @@ local producer = require("resty.kafka.producer")
 local logger = require("resty.logger.socket")
 local _M = {}
 
-local function file(msg)
+function _M.file(msg)
     local logstr = cjson.encode(msg)
     ngx.log(ngx.ERR, logstr)
-
 end
 
-local function rsyslog(msg, host, port, type)
+function _M.rsyslog(msg, host, port, type)
     if not logger.initted() then
         local ok, err = logger.init {
             host = host,
@@ -36,7 +35,7 @@ local function rsyslog(msg, host, port, type)
 
 end
 
-local function kafkalog(msg, broker_list, kafka_topic)
+function _M.kafkalog(msg, broker_list, kafka_topic)
     local message = cjson.encode(msg)
     local bp = producer:new(broker_list, { producer_type = "async" })
     local ok, err = bp:send(kafka_topic, nil, message)

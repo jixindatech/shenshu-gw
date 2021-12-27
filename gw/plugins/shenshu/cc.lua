@@ -11,11 +11,13 @@ local radix = require("resty.radixtree")
 local limit_conn = require("resty.limit.conn")
 local limit_req = require("resty.limit.req")
 local limit_traffic = require("resty.limit.traffic")
-local logger = require("resty.logger.socket")
+local logger = require("gw.plugins.shenshu.log")
 local config = require("gw.core.config")
+local tab = require("gw.core.table")
 
 local ngx = ngx
 local ngx_sleep = ngx.sleep
+local ngx_time = ngx.time
 
 local module = {}
 local module_name = "shenshu_cc"
@@ -39,9 +41,8 @@ local cc_schema = {
             items = {
                 type = "object",
                 properties = {
+                    id = schema.id_shema,
                     action = { type = "string" },
-                    duration = { type = "integer" },
-                    match = { type = "string" },
                     method = { type = "string" },
                     mode = { type = "string" },
                     threshold = { type = "integer" },
@@ -96,7 +97,7 @@ local function construct_radix(configs)
             paths = { item.uri},
             methods = { item.method },
             handler = function (ctx)
-                ctx.matched_config = item
+                ctx.shenshu_cc_matched_config = item
             end
         }
         tab_insert(radix_items, obj)
@@ -109,7 +110,7 @@ local match_opts = {}
 function _M.access(ctx)
     local route = ctx.matched_route
     local ccs = module:get(route.id)
-    if ccs.value ~= nil then
+    if #ccs.value > 0 then
         if ccs.value.matcher == nil then
             local matcher  = construct_radix(ccs.value)
             if err ~= nil then
@@ -127,16 +128,15 @@ function _M.access(ctx)
             return true, nil
         end
 
-        local cc_config = ctx.matched_config
-        ngx.log(ngx.ERR, cjson.encode(cc_config))
+        local cc_config = ctx.shenshu_cc_matched_config
         local key
         if cc_config.mode == "ip" then
             key = ctx.var.remote_addr
         end
 
         local lim1, lim2, err
-        lim1, err = limit_req.new(lua_shared_dict_cc_req, cc_config.threshold, cc_config.duration)
-        lim2, err = limit_conn.new(lua_shared_dict_cc_conn, cc_config.threshold, 0, cc_config.duration)
+        lim1, err = limit_req.new(lua_shared_dict_cc_req, cc_config.threshold, 0)
+        lim2, err = limit_conn.new(lua_shared_dict_cc_conn, cc_config.threshold, 0, 0.5)
         local limiters = { lim1, lim2 }
 
         local keys = {key, key}
@@ -146,14 +146,24 @@ function _M.access(ctx)
         delay, err = limit_traffic.combine(limiters, keys, states)
         if not delay then
             if err == "rejected" then
+                local msg = tab.new(20, 10)
+                msg = {
+                    host = ctx.var.host,
+                    ip = ctx.ip,
+                    timestamp = ngx_time(),
+                    uri = ctx.var.uri,
+                    method = ngx.req.get_method(),
+                    id = cc_config.id,
+                }
+                ctx.shenshu_cc_msg = msg
                 return false, "rejected"
             end
             return false, err
         end
 
         if lim2:is_committed() then
-            ctx.cc_limit_conn = lim2
-            ctx.cc_limit_conn_key = key
+            ctx.shenshu_cc_limit_conn = lim2
+            ctx.shenshu_cc_limit_conn_key = key
         end
 
         if delay >= 0.001 then
@@ -166,24 +176,26 @@ function _M.access(ctx)
 end
 
 function _M.log(ctx)
-    local lim = ctx.cc_limit_conn
+    local lim = ctx.shenshu_cc_limit_conn
     if lim then
         local latency = tonumber(ngx.var.request_time)
-        local key = ctx.limit_conn_key
+        local key = ctx.shenshu_cc_limit_conn_key
         local conn, err = lim:leaving(key, latency)
         if not conn then
             ngx.log(ngx.ERR, "failed to record the connection leaving ", "request: ", err)
         end
     end
 
-    local msg = ctx.gw_msg
+    local msg = ctx.shenshu_cc_msg
     if msg ~= nil then
+        ngx.log(ngx.ERR, cjson.encode(msg))
         if module and module.local_config.file then
             logger.file(msg)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog(msg, module.local_config.rsyslog.host,
+            logger.rsyslog(msg,
+                    module.local_config.rsyslog.host,
                     module.local_config.rsyslog.port,
                     module.local_config.rsyslog.type)
         end
@@ -193,6 +205,8 @@ function _M.log(ctx)
                     module.local_config.kafka.broker_list,
                     module.local_config.kafka.topic)
         end
+
+        ctx.shenshu_cc_msg = nil
     end
 end
 

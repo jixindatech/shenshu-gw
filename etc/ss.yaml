@@ -3,7 +3,7 @@ ip_log:
   file: error.log  # 仅测试用
   rsyslog:
     host: 127.0.0.1
-    port: 514
+    port: 10514
     type: tcp
   #kafka:
   #  topic: shenshu_ip
@@ -17,7 +17,7 @@ cc_log:
   file: error.log  # 仅测试用
   rsyslog:
     host: 127.0.0.1
-    port: 514
+    port: 10515
     type: tcp
   #kafka:
   #  topic: shenshu_cc
@@ -31,7 +31,7 @@ specific_log:
   file: error.log  # 仅测试用
   rsyslog:
     host: 127.0.0.1
-    port: 514
+    port: 10516
     type: tcp
   #kafka:
   #  topic: shenshu_specific
@@ -45,7 +45,7 @@ batch_log:
   file: error.log  # 仅测试用
   rsyslog:
     host: 127.0.0.1
-    port: 514
+    port: 10517
     type: tcp
   #kafka:
   #  topic: shenshu_batch

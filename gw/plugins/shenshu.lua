@@ -9,6 +9,7 @@ local cc = require("gw.plugins.shenshu.cc")
 local batch_rule = require("gw.plugins.shenshu.batch_rule")
 local specific_rule = require("gw.plugins.shenshu.specific_rule")
 local rule = require("gw.plugins.shenshu.rule")
+local action = require("gw.plugins.shenshu.rule.action")
 
 local ngx = ngx
 local conf_file = ngx.config.prefix() .. "etc/ss.yaml"
@@ -76,30 +77,73 @@ function _M.init_worker()
 end
 
 function _M.access(ctx)
-    local status, err = ip.access(ctx)
+    ctx.ip = ctx.var.remote_addr
+
+    local status, err = globalip.access(ctx)
     if err ~= nil then
         ngx.log(ngx.ERR, "err:" .. err)
     end
 
-    if ctx.ip_denied then
-        ngx.log(ngx.ERR, "ip denied")
-    end
-
     if ctx.ip_allowed then
-        ngx.log(ngx.ERR, "ip allowd")
+        return
     end
 
-    status, err = cc.access(ctx)
-    if err ~= nil then
+    if ctx.ip_denied then
         ngx.exit(400)
     end
 
-    status = rule.access(ctx)
+    status, err = ip.access(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, "err:" .. err)
+    end
 
+    if ctx.ip_allowed then
+        return
+    end
+
+    if ctx.ip_denied then
+        ngx.exit(400)
+    end
+
+    status, err = cc.access(ctx)
+    if err == "rejected" then
+        ngx.exit(400)
+    end
+
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
+
+    status, err = rule.access(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
+
+    if ctx.rules_action == action.DENY then
+        ngx.exit(400)
+    end
 end
 
 function _M.log(ctx)
+    local err = globalip.log(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
 
+    err = ip.log(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
+
+    err = cc.log(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
+
+    err = rule.log(ctx)
+    if err ~= nil then
+        ngx.log(ngx.ERR, err)
+    end
 end
 
 return _M

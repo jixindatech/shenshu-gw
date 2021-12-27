@@ -1,5 +1,6 @@
 local type = type
 local ipairs = iparis
+local tonumber = tonumber
 local require = require
 
 local tab      = require("gw.core.table")
@@ -44,7 +45,7 @@ function _M.greater(a, b)
             end
         end
     else
-        greater = a > b
+        greater = tonumber(a) > tonumber(b)
 
         if greater then
             value = a
@@ -65,7 +66,7 @@ function _M.less(a, b)
             end
         end
     else
-        less = a < b
+        less = tonumber(a) < tonumber(b)
 
         if less then
             value = a

@@ -84,7 +84,7 @@ function _M.access(ctx)
     ctx.ip = ctx.var.remote_addr
     local route = ctx.matched_route
     local ips = module:get(route.id)
-    if ips.value.allow ~= nil then
+    if #ips.value.allow > 0 then
         if ips.value.allow_matcher == nil then
             local matcher, err = ipmatcher.new(ips.value.allow)
             if err ~= nil then
@@ -99,7 +99,7 @@ function _M.access(ctx)
         end
     end
 
-    if ips.value.deny ~= nil then
+    if #ips.value.deny > 0 then
         if ips.value.deny_matcher == nil then
             local matcher, err = ipmatcher.new(ips.value.deny)
             if err ~= nil then
@@ -119,14 +119,15 @@ function _M.access(ctx)
 end
 
 function _M.log(ctx)
-    local msg = ctx.ip_msg
+    local msg = ctx.shenshu_ip_msg
     if msg ~= nil then
         if module and module.local_config.file then
             logger.file(msg)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog(msg, module.local_config.rsyslog.host,
+            logger.rsyslog(msg,
+                    module.local_config.rsyslog.host,
                     module.local_config.rsyslog.port,
                     module.local_config.rsyslog.type)
         end
@@ -136,6 +137,8 @@ function _M.log(ctx)
                     module.local_config.kafka.broker_list,
                     module.local_config.kafka.topic)
         end
+
+        ctx.shenshu_ip_msg = nil
     end
 end
 

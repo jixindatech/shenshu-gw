@@ -189,7 +189,6 @@ local function get_server_picker(upstream, checker, version)
 end
 
 function _M.get(ctx, id)
-    ngx.log(ngx.ERR, "http_balancer_phase")
     local upstream_item = module:get(id)
     if upstream_item == nil then
         return nil, "invalid upstream id"

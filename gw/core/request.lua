@@ -60,8 +60,8 @@ function _M.parse_request_body(config, request_headers, collections)
 
         local FILES = {}
         local FILES_NAMES = {}
-        local FILES_SIZES = {}
-        local FILES_TMP_CONTENT = {}
+        local FILES_SIZE = {}
+        local FILES_CONTENT = {}
 
         ngx.req.init_body()
         form:set_timeout(1000)
@@ -109,11 +109,10 @@ function _M.parse_request_body(config, request_headers, collections)
 
                 ngx.req.append_body(chunk)
             elseif typ == "part_end" then
-                tab_insert(FILES_SIZES, body_size)
                 files_size = files_size + body_size
                 body_size = 0
-
-                FILES_TMP_CONTENT[file] = body
+                FILES_SIZE[file] = body_size
+                FILES_CONTENT[file] = body
                 body = ''
 
                 ngx.req.append_body("\r\n--" .. form.boundary)
@@ -132,9 +131,9 @@ function _M.parse_request_body(config, request_headers, collections)
 
         collections.FILES = FILES
         collections.FILES_NAMES = FILES_NAMES
-        collections.FILES_SIZES = FILES_SIZES
-        collections.FILES_TMP_CONTENT = FILES_TMP_CONTENT
-        collections.FILES_COMBINED_SIZE = files_size
+        collections.FILES_SIZE = FILES_SIZE
+        collections.FILES_CONTENT = FILES_CONTENT
+        collections.FILES_SIZES = files_size
 
         return nil
     elseif ngx.re.find(content_type_header, [=[^application/x-www-form-urlencoded]=], 'oij') and config.decoders.form then

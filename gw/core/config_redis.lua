@@ -95,6 +95,10 @@ local function sync_data(self)
         return
     end
 
+    if data.values == ngx.null then
+        data.values = {}
+    end
+
     local items = data.values or {}
     local values = new_tab(#items, 0)
     local values_hash = new_tab(0, #items)
@@ -131,9 +135,8 @@ local function sync_data(self)
                 changed = true
                 tab_insert(values, origin_item)
                 values_hash[key] = #values
+                origin_item.not_released = true
                 goto CONTINUE
-            else
-                origin_item.release = true
             end
         end
 
@@ -143,7 +146,8 @@ local function sync_data(self)
             changed = true
             tab_insert(values, conf_item)
             values_hash[key] = #values
-            conf_item.id = tostring(item.id)
+            local item_id = item.id or item.name
+            conf_item.id = tostring(item_id)
             conf_item.clean_handlers = {}
 
             if self.init_func then
@@ -158,7 +162,7 @@ local function sync_data(self)
 
     if self.values then
         for _, item in ipairs(self.values) do
-            if item.value and item.release then
+            if item.value and item.not_release ~= true then
                 if item.clean_handlers then
                     for _, clean_handler in ipairs(item.clean_handlers) do
                         clean_handler(item)

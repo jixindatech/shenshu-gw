@@ -8,7 +8,7 @@ local tablepool = require("tablepool")
 local cjson = require("cjson.safe")
 local schema = require("gw.schema")
 local producer = require("resty.kafka.producer")
-local logger = require("resty.logger.socket")
+local logger = require("gw.plugins.shenshu.log")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
 local batch = require("gw.plugins.shenshu.batch_rule")
@@ -131,132 +131,147 @@ function _M.access(ctx)
     local matched = false
     local config_action = rules.action
 
-    if rules.value ~= nil then
-        if rules.value.specific_rules == nil then
-            local specific_rules, err =specific.get_rules(rules.value.specific)
-            if err ~= nil then
-                return false, err
+    if rules.value ~= nil  then
+        local params
+        if #rules.value.specific > 0 then
+            if rules.value.specific_rules == nil then
+                local specific_rules, err =specific.get_rules(rules.value.specific)
+                if err ~= nil then
+                    return false, err
+                end
+
+                rules.value.specific_rules = specific_rules
             end
 
-            rules.value.specific_rules = specific_rules
-        end
+            ctx.specific_matched_events = tab.new(0, 20)
 
-        ctx.specific_matched_events = tab.new(0, 20)
+            params = tablepool.fetch("rule_collections", 0, 32)
+            collections.lookup["access"](rules, params, ctx)
 
-        local params = tablepool.fetch("rule_collections", 0, 32)
-        collections.lookup["access"](rules, params, ctx)
+            for _, item in ipairs(rules.value.specific_rules) do
+                local rule_action = item.value.action
+                local matched_events = tab.new(0, 20)
 
-        for _, item in ipairs(rules.value.specific_rules) do
-            local rule_action = item.value.action
-            for _, rule in ipairs(item.value.rules) do
-                local text, variable
+                for _, rule in ipairs(item.value.rules) do
+                    local text, variable
 
-                if rule.variable == "REQ_HEADER" then
-                    variable = params.REQUEST_HEADERS[rule.header]
-                elseif rule.variable == "FILE_NAMES" then
-                    variable = params.FILES_NAMES
-                elseif rule.variable == "FILE" then
-                    variable = params.FILES_TMP_CONTENT
-                elseif rule.variable == "REQUEST_BODY" then
-                    variable = request.get_request_body()
-                else
-                    variable = params[rule.variable]
+                    if rule.variable == "REQ_HEADER" then
+                        variable = params.REQUEST_HEADERS[rule.header]
+                    elseif rule.variable == "FILE_NAMES" then
+                        variable = params.FILES_NAMES
+                    elseif rule.variable == "FILE" then
+                        variable = params.FILES_TMP_CONTENT
+                    elseif rule.variable == "REQUEST_BODY" then
+                        variable = request.get_request_body()
+                    else
+                        variable = params[rule.variable]
+                    end
+
+                    matched, text = rules_match(rule, variable, rules)
+                    if matched ~= true then
+                        break
+                    end
+
+                    local event = {
+                        host = ctx.var.host,
+                        ip = ctx.var.ip,
+                        timestamp = ngx_now(),
+                        uri = ctx.var.uri,
+                        method = ctx.var.method,
+                        info = rule.msg,
+                        text = text,
+                    }
+
+                    tab_insert(matched_events, event)
                 end
-                ngx.log(ngx.ERR, rule.variable)
-                ngx.log(ngx.ERR, cjson.encode(params))
 
-                ngx.log(ngx.ERR, "var:" .. variable)
-                matched, text = rules_match(rule, variable, rules)
-                if matched ~= true then
-                    break
+                if matched then
+                    if rule_action == action.ALLOW then
+                        ctx.rules_action = action.ALLOW
+                        --[[ Allow first privilege ]]--
+                        return true, nil
+                    end
+
+                    matched_events["id"]  =item.id
+                    tab_insert(ctx.specific_matched_events, matched_events)
+
+                    if rule_action == action.LOG or config_action == action.LOG then
+                        ctx.rules_action = action.LOG
+                    else
+                        ctx.rules_action = action.DENY
+                    end
+
+                    if rules.short_circuit == 1 then
+                        ctx.rules_short_circuit = 1
+                        break
+                    end
                 end
-
-                local event = {
-                    host = ctx.var.host,
-                    ip = ctx.var.ip,
-                    timestamp = ngx_now(),
-                    uri = ctx.var.uri,
-                    method = ctx.var.method,
-                    id = item.id,
-                    info = rule.msg,
-                    text = text,
-                }
-
-                tab_insert(ctx.specific_matched_events, event)
             end
 
-            if matched then
-                if rule_action == action.ALLOW then
-                    ctx.rules_action = action.ALLOW
-                    --[[ Allow first privilege ]]--
-                    return true, nil
-                end
-
-                if rule_action == action.LOG or config_action == action.LOG then
-                    ctx.rules_action = action.LOG
-                else
-                    ctx.rules_action = action.DENY
-                end
-
-                if rules.short_circuit == 1 then
-                    ctx.rules_short_circuit = 1
-                    break
-                end
-            end
-        end
-
-        if matched and rules.short_circuit == 1 then
-            return true, nil
-        end
-
-        if rules.value.batch_rules == nil then
-            local batch_rules, err =batch.get_rules(rules.value.batch)
-            if err ~= nil then
-                return false, err
-            end
-
-            rules.value.batch_rules = batch_rules
-        end
-
-        ctx.batch_matched_events = tab.new(0, 20)
-
-        local uri_args = tab.table_values(params.URI_ARGS)
-        if #uri_args > 0 then
-            local hits = rules.value.batch_rules.db:scan(uri_args, rules.value.batch_rules.scratch)
-            if #hits > 0 then
-                matched = true
-                local events = {
-                    id = hits,
-                    text = params.URI_ARGS
-                }
-                tab_insert(ctx.batch_matched_events, events)
-
-                if config_action == action.LOG then
-                    ctx.rules_action = action.LOG
-                else
-                    ctx.rules_action = action.DENY
-                end
+            if matched and rules.short_circuit == 1 then
+                return true, nil
             end
         end
 
-        if matched and rules.short_circuit == 1 then
-            return true, nil
+        if ctx.rules_action == action.DENY then
+            return
         end
 
-        local body_args = tab.table_values(params.BODY_ARGS)
-        if #body_args > 0 then
-            local hits = rules.value.batch_rules.db:scan(body_args, rules.value.batch_rules.scratch)
-            if #hits > 0 then
-                local events = {
-                    id = hits,
-                    text = params.BODY_ARGS
-                }
-                tab_insert(ctx.batch_matched_events, events)
+        if #rules.value.batch > 0 then
+            if rules.value.batch_rules == nil then
+                local batch_rules, err =batch.get_rules(rules.value.batch)
+                if err ~= nil then
+                    return false, err
+                end
 
-                if config_action == action.LOG then
-                    ctx.rules_action = action.LOG
-                else
-                    ctx.rules_action = action.DENY
+                rules.value.batch_rules = batch_rules
+            end
+
+            if params == nil then
+                params = tablepool.fetch("rule_collections", 0, 32)
+                collections.lookup["access"](rules, params, ctx)
+            end
+
+            ctx.batch_matched_events = tab.new(0, 20)
+
+            local uri_args = tab.table_values(params.URI_ARGS)
+            if #uri_args > 0 then
+                local hits = rules.value.batch_rules.db:scan(uri_args, rules.value.batch_rules.scratch)
+                if #hits > 0 then
+                    matched = true
+                    local events = {
+                        id = hits,
+                        text = params.URI_ARGS
+                    }
+                    tab_insert(ctx.batch_matched_events, events)
+
+                    if config_action == action.LOG then
+                        ctx.rules_action = action.LOG
+                    else
+                        ctx.rules_action = action.DENY
+                    end
+                end
+            end
+
+            if matched and rules.short_circuit == 1 then
+                return
+            end
+
+            local body_args = tab.table_values(params.BODY_ARGS)
+            if #body_args > 0 then
+                local hits = rules.value.batch_rules.db:scan(body_args, rules.value.batch_rules.scratch)
+                if #hits > 0 then
+                    local events = {
+                        id = hits,
+                        text = params.BODY_ARGS
+                    }
+                    tab_insert(ctx.batch_matched_events, events)
+
+                    if config_action == action.LOG then
+                        ctx.rules_action = action.LOG
+                    else
+                        ctx.rules_action = action.DENY
+                    end
                 end
             end
         end
@@ -295,7 +310,8 @@ function _M.log(ctx)
        end
 
        if module and module.local_config.specific_log.rsyslog then
-          logger.rsyslog(ctx.batch_matched_events, module.local_config.specific_log.rsyslog.host,
+          logger.rsyslog(ctx.batch_matched_events,
+                  module.local_config.specific_log.rsyslog.host,
                   module.local_config.batch_log.rsyslog.port,
                   module.local_config.batch_log.rsyslog.type)
         end
