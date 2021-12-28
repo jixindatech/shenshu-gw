@@ -1,10 +1,10 @@
 package = "gw"
-version = "0.11"
+version = "0.1-1"
 supported_platforms = {"linux"}
 
 source = {
     url = "git://github.com/jixindatech/shenshu-gw",
-    tag = "v0.11",
+    tag = "v0.1-1",
     branch="master",
 }
 
