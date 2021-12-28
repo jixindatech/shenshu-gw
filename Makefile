@@ -12,7 +12,7 @@ OR_PREFIX ?= $(shell $(OR_EXEC) -V 2>&1 | grep -Eo 'prefix=(.*)/nginx\s+' | grep
 OPENSSL_PREFIX ?= $(addprefix $(OR_PREFIX), openssl)
 HOMEBREW_PREFIX ?= /usr/local
 
-LUA_HS = https://gitee.com/chengfangang/luahs/blob/master/luahs-master.rockspec
+LUA_HS = https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec
 
 show:
 	@echo ${INST_PREFIX}

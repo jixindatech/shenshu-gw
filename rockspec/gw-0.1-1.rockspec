@@ -4,8 +4,6 @@ supported_platforms = {"linux"}
 
 source = {
     url = "git://github.com/jixindatech/shenshu-gw",
-    tag = "v0.1-1",
-    branch="master",
 }
 
 description = {
