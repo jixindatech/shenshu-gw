@@ -165,18 +165,25 @@ install: default
 	$(INSTALL) -d /usr/local/gw/conf/cert
 	$(INSTALL) conf/nginx.conf /usr/local/gw/conf/nginx.conf
 	$(INSTALL) conf/mime.types /usr/local/gw/conf/mime.types
-	$(INSTALL) etc/config.yaml /usr/local/gw/etc/config.yaml
 	$(INSTALL) conf/cert/* /usr/local/gw/conf/cert/
 
 	$(INSTALL) -d $(INST_LUADIR)/gw
 	$(INSTALL) gw/*.lua $(INST_LUADIR)/gw/
 
+	$(INSTALL) -d $(INST_LUADIR)/gw/cli
+	$(INSTALL) gw/cli/*.lua $(INST_LUADIR)/gw/cli/
 
 	$(INSTALL) -d $(INST_LUADIR)/gw/core
 	$(INSTALL) gw/core/*.lua $(INST_LUADIR)/gw/core/
 
-	$(INSTALL) -d $(INST_LUADIR)/gw/cli
-	$(INSTALL) gw/cli/*.lua $(INST_LUADIR)/gw/cli/
+	$(INSTALL) -d $(INST_LUADIR)/gw/plugins
+	$(INSTALL) gw/plugins/*.lua $(INST_LUADIR)/gw/plugins/
+	$(INSTALL) -d $(INST_LUADIR)/gw/plugins/shenshu
+	$(INSTALL) gw/plugins/shenshu/*.lua $(INST_LUADIR)/gw/plugins/shenshu/
+
+	$(INSTALL) -d $(INST_LUADIR)/gw/router
+	$(INSTALL) gw/router/*.lua $(INST_LUADIR)/gw/router/
+
 	$(INSTALL) -d $(INST_LUADIR)/gw/utils
 	$(INSTALL) gw/utils/*.lua $(INST_LUADIR)/gw/utils/
 
