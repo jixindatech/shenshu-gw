@@ -16,7 +16,7 @@ RUN set -x \
     && mkdir ~/.luarocks \
     && luarocks config variables.OPENSSL_LIBDIR /usr/local/openresty/openssl/lib \
     && luarocks config variables.OPENSSL_INCDIR /usr/local/openresty/openssl/include \
-    && luarocks install https://gitee.com/chengfangang/luahs/blob/master/luahs-master.rockspec --tree=/usr/local/gw/deps \
+    && luarocks install https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec --tree=/usr/local/gw/deps \
     && luarocks install gw-0.1-1.rockspec --tree=/usr/local/gw/deps \
     && cp -v /usr/local/gw/deps/lib/luarocks/rocks-5.1/gw/0.1-1/bin/gw /usr/bin/ \
     && mv /usr/local/gw/deps/share/lua/5.1/gw /usr/local/gw \
