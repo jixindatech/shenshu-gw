@@ -149,7 +149,7 @@ function _M.access(ctx)
                 local msg = tab.new(20, 10)
                 msg = {
                     host = ctx.var.host,
-                    ip = ctx.ip,
+                    ip = ctx.shenshu_ip,
                     timestamp = ngx_time(),
                     uri = ctx.var.uri,
                     method = ngx.req.get_method(),

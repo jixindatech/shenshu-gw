@@ -7,7 +7,6 @@ local tab_insert = table.insert
 local tablepool = require("tablepool")
 local cjson = require("cjson.safe")
 local schema = require("gw.schema")
-local producer = require("resty.kafka.producer")
 local logger = require("gw.plugins.shenshu.log")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
@@ -19,7 +18,7 @@ local action = require("gw.plugins.shenshu.rule.action")
 local tab = require("gw.core.table")
 
 local ngx = ngx
-local ngx_now = ngx.now
+local ngx_time = ngx.time
 
 local module = {}
 local module_name = "shenshu_rule"
@@ -129,7 +128,7 @@ function _M.access(ctx)
     local route = ctx.matched_route
     local rules = module:get(route.id)
     local matched = false
-    local config_action = rules.action
+    local config_action = rules.value.action
 
     if rules.value ~= nil  then
         local params
@@ -143,14 +142,14 @@ function _M.access(ctx)
                 rules.value.specific_rules = specific_rules
             end
 
-            ctx.specific_matched_events = tab.new(0, 20)
+            ctx.shenshu_specific_matched_events = tab.new(0, 20)
 
             params = tablepool.fetch("rule_collections", 0, 32)
-            collections.lookup["access"](rules, params, ctx)
+            collections.lookup["access"](rules.value, params, ctx)
 
             for _, item in ipairs(rules.value.specific_rules) do
                 local rule_action = item.value.action
-                local matched_events = tab.new(0, 20)
+                local matched_text = tab.new(0, 20)
 
                 for _, rule in ipairs(item.value.rules) do
                     local text, variable
@@ -172,33 +171,33 @@ function _M.access(ctx)
                         break
                     end
 
-                    local event = {
-                        host = ctx.var.host,
-                        ip = ctx.var.ip,
-                        timestamp = ngx_now(),
-                        uri = ctx.var.uri,
-                        method = ctx.var.method,
-                        info = rule.msg,
-                        text = text,
-                    }
-
-                    tab_insert(matched_events, event)
+                    tab_insert(matched_text, variable)
                 end
 
                 if matched then
                     if rule_action == action.ALLOW then
-                        ctx.rules_action = action.ALLOW
+                        ctx.shenshu_rule_action = action.ALLOW
                         --[[ Allow first privilege ]]--
                         return true, nil
                     end
 
-                    matched_events["id"]  =item.id
-                    tab_insert(ctx.specific_matched_events, matched_events)
+                    local event = {
+                        id = item.id,
+                        uuid = ctx.shenshu_uuid,
+                        host = ctx.var.host,
+                        ip = ctx.shenshu_ip,
+                        timestamp = ngx_time(),
+                        uri = ctx.var.uri,
+                        method = ngx.req.get_method(),
+                        values = matched_text,
+                    }
+
+                    tab_insert(ctx.shenshu_specific_matched_events, event)
 
                     if rule_action == action.LOG or config_action == action.LOG then
-                        ctx.rules_action = action.LOG
+                        ctx.shenshu_rule_action = action.LOG
                     else
-                        ctx.rules_action = action.DENY
+                        ctx.shenshu_rule_action = action.DENY
                     end
 
                     if rules.short_circuit == 1 then
@@ -213,7 +212,7 @@ function _M.access(ctx)
             end
         end
 
-        if ctx.rules_action == action.DENY then
+        if ctx.shenshu_rule_action == action.DENY then
             return
         end
 
@@ -232,23 +231,32 @@ function _M.access(ctx)
                 collections.lookup["access"](rules, params, ctx)
             end
 
-            ctx.batch_matched_events = tab.new(0, 20)
+            ctx.shenshu_batch_matched_events = tab.new(0, 20)
 
             local uri_args = tab.table_values(params.URI_ARGS)
             if #uri_args > 0 then
                 local hits = rules.value.batch_rules.db:scan(uri_args, rules.value.batch_rules.scratch)
                 if #hits > 0 then
                     matched = true
-                    local events = {
-                        id = hits,
-                        text = params.URI_ARGS
-                    }
-                    tab_insert(ctx.batch_matched_events, events)
+                    for _, hit in ipairs(hits) do
+                        local event = {
+                            id = hit.id,
+                            uuid = ctx.shenshu_uuid,
+                            values = params.URI_ARGS,
+                            host = ctx.var.host,
+                            ip = ctx.shenshu_ip,
+                            timestamp = ngx_time(),
+                            uri = ctx.var.uri,
+                            method = ngx.req.get_method(),
+                        }
+
+                        tab_insert(ctx.shenshu_batch_matched_events, event)
+                    end
 
                     if config_action == action.LOG then
-                        ctx.rules_action = action.LOG
+                        ctx.shenshu_rule_action = action.LOG
                     else
-                        ctx.rules_action = action.DENY
+                        ctx.shenshu_rule_action = action.DENY
                     end
                 end
             end
@@ -261,16 +269,25 @@ function _M.access(ctx)
             if #body_args > 0 then
                 local hits = rules.value.batch_rules.db:scan(body_args, rules.value.batch_rules.scratch)
                 if #hits > 0 then
-                    local events = {
-                        id = hits,
-                        text = params.BODY_ARGS
-                    }
-                    tab_insert(ctx.batch_matched_events, events)
+                    for _, hit in ipairs(hits) do
+                        local event = {
+                            id = hit.id,
+                            uuid = ctx.shenshu_uuid,
+                            values = params.BODY_ARGS,
+                            host = ctx.var.host,
+                            ip = ctx.shenshu_ip,
+                            timestamp = ngx_time(),
+                            uri = ctx.var.uri,
+                            method = ngx.req.get_method(),
+                        }
+
+                        tab_insert(ctx.shenshu_batch_matched_events, event)
+                    end
 
                     if config_action == action.LOG then
-                        ctx.rules_action = action.LOG
+                        ctx.shenshu_rule_action = action.LOG
                     else
-                        ctx.rules_action = action.DENY
+                        ctx.shenshu_rule_action = action.DENY
                     end
                 end
             end
@@ -282,49 +299,53 @@ end
 
 
 function _M.log(ctx)
+    if ctx.shenshu_specific_matched_events and #ctx.shenshu_specific_matched_events > 0 then
+        for _, event in ipairs(ctx.shenshu_specific_matched_events) do
+            if module and module.local_config.specific_log.file then
+                logger.file(event)
+            end
+
+            if module and module.local_config.specific_log.rsyslog then
+                logger.rsyslog(event,
+                        module.local_config.specific_log.rsyslog.host,
+                        module.local_config.specific_log.rsyslog.port,
+                        module.local_config.specific_log.rsyslog.type)
+            end
+
+            if module and module.local_config.specific_log.kafka then
+                logger.kafkalog(event,
+                        specific_broker_list,
+                        specific_kafka_topic)
+            end
+        end
+
+        ctx.shenshu_specific_matched_events = nil
+    end
+
+    if ctx.shenshu_batch_matched_events and #ctx.shenshu_batch_matched_events > 0  then
+        for _, event in ipairs(ctx.shenshu_batch_matched_events) do
+            if module and module.local_config.batch_log.file then
+                logger.file(event)
+            end
+
+            if module and module.local_config.specific_log.rsyslog then
+                logger.rsyslog(event,
+                        module.local_config.specific_log.rsyslog.host,
+                        module.local_config.batch_log.rsyslog.port,
+                        module.local_config.batch_log.rsyslog.type)
+            end
+
+            if module and module.local_config.specific_log.kafka then
+                logger.kafkalog(event,
+                        batch_broker_list,
+                        batch_kafka_topic)
+            end
+        end
+
+        ctx.shenshu_batch_matched_events = nil
+    end
+
     tablepool.release("rule_collections", ctx)
-    if ctx.specific_matched_events and #ctx.specific_matched_events > 0 then
-        if module and module.local_config.specific_log.file then
-            logger.file(ctx.specific_matched_events)
-        end
-
-        if module and module.local_config.specific_log.rsyslog then
-            logger.rsyslog(ctx.specific_matched_events,
-                    module.local_config.specific_log.rsyslog.host,
-                    module.local_config.specific_log.rsyslog.port,
-                    module.local_config.specific_log.rsyslog.type)
-        end
-
-        if module and module.local_config.specific_log.kafka then
-            logger.kafkalog(ctx.specific_matched_events,
-                    specific_broker_list,
-                    specific_kafka_topic)
-        end
-
-        ctx.specific_matched_events = nil
-    end
-
-    if ctx.batch_matched_events and #ctx.batch_matched_events > 0 then
-       if module and module.local_config.batch_log.file then
-          logger.file(ctx.batch_matched_events)
-       end
-
-       if module and module.local_config.specific_log.rsyslog then
-          logger.rsyslog(ctx.batch_matched_events,
-                  module.local_config.specific_log.rsyslog.host,
-                  module.local_config.batch_log.rsyslog.port,
-                  module.local_config.batch_log.rsyslog.type)
-        end
-
-       if module and module.local_config.specific_log.kafka then
-          logger.kafkalog(ctx.batch_matched_events,
-                  batch_broker_list,
-                  batch_kafka_topic)
-       end
-
-       ctx.batch_matched_events = nil
-    end
-
 end
 
 return _M

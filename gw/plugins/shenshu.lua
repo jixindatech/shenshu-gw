@@ -2,6 +2,7 @@ local require = require
 local lfs   = require("lfs")
 local yaml  = require("tinyyaml")
 local cjson = require("cjson.safe")
+local uuid = require("resty.jit-uuid")
 
 local globalip = require("gw.plugins.shenshu.globalip")
 local ip = require("gw.plugins.shenshu.ip")
@@ -45,6 +46,8 @@ function _M.init_worker()
 
     module.local_config = yaml_config
 
+    uuid.seed()
+
     err = globalip.init_worker(yaml_config.ip_log)
     if err ~= nil then
         return false, err
@@ -77,7 +80,8 @@ function _M.init_worker()
 end
 
 function _M.access(ctx)
-    ctx.ip = ctx.var.remote_addr
+    ctx.shenshu_ip = ctx.var.remote_addr
+    ctx.shenshu_uuid =  uuid.generate_v4()
 
     local status, err = globalip.access(ctx)
     if err ~= nil then
@@ -119,7 +123,7 @@ function _M.access(ctx)
         ngx.log(ngx.ERR, err)
     end
 
-    if ctx.rules_action == action.DENY then
+    if ctx.shenshu_rule_action == action.DENY then
         ngx.exit(400)
     end
 end

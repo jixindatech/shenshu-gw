@@ -1,11 +1,11 @@
 local _M = {}
 
 local cjson = require("cjson.safe")
-local cookie = require "resty.cookie"
-local upload	= require "resty.upload"
+local cookie = require("resty.cookie")
+local upload	= require("resty.upload")
 
-local logger = require "gw.core.log"
-local tab   = require "gw.core.table"
+local logger = require("gw.core.log")
+local tab   = require("gw.core.table")
 
 local tab_insert = table.insert
 local tab_concat = table.concat

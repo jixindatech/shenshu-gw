@@ -30,6 +30,7 @@ dependencies = {
     "lua-resty-ipmatcher = 0.6.1-0",
     "lua-typeof = 0.1-0",
     "lua-ffi-libinjection = 1.0-2",
+    "lua-resty-jit-uuid = 0.0.7-2",
 }
 
 build = {
