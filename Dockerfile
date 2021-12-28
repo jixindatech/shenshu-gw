@@ -1,7 +1,7 @@
 ARG ENABLE_PROXY=true
 
 FROM openresty/openresty:1.19.3.1-alpine-fat AS production-stage
-COPY rockspec/shenshugw-0.1-0.rockspec .
+COPY rockspec/gw-0.1-0.rockspec .
 ARG ENABLE_PROXY=true
 RUN set -x \
     && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i 's,https://dl-cdn.alpinelinux.org,https://mirrors.aliyun.com,g' /etc/apk/repositories) \
@@ -12,9 +12,11 @@ RUN set -x \
     pkgconfig \
     cmake \
     git \
+    hyperscan-dev \
     && mkdir ~/.luarocks \
     && luarocks config variables.OPENSSL_LIBDIR /usr/local/openresty/openssl/lib \
     && luarocks config variables.OPENSSL_INCDIR /usr/local/openresty/openssl/include \
+    && luarocks install https://gitee.com/chengfangang/luahs/blob/master/luahs-master.rockspec --tree=/usr/local/gw/deps \
     && luarocks install gw-0.1-0.rockspec --tree=/usr/local/gw/deps \
     && cp -v /usr/local/gw/deps/lib/luarocks/rocks-5.1/gw/0.1-0/bin/gw /usr/bin/ \
     && mv /usr/local/gw/deps/share/lua/5.1/gw /usr/local/gw \
