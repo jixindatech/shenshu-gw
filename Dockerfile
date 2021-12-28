@@ -1,7 +1,7 @@
 ARG ENABLE_PROXY=true
 
 FROM openresty/openresty:1.19.3.1-alpine-fat AS production-stage
-COPY rockspec/gw-0.1-0.rockspec .
+COPY rockspec/gw-0.1-1.rockspec .
 ARG ENABLE_PROXY=true
 RUN set -x \
     && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i 's,https://dl-cdn.alpinelinux.org,https://mirrors.aliyun.com,g' /etc/apk/repositories) \

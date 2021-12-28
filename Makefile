@@ -180,4 +180,5 @@ install: default
 	$(INSTALL) -d $(INST_LUADIR)/gw/utils
 	$(INSTALL) gw/utils/*.lua $(INST_LUADIR)/gw/utils/
 
-	$(INSTALL) bin/gw $(INST_BINDIR)/gw
+	$(INSTALL) -d $(INST_LUADIR)/gw/bin
+	$(INSTALL) bin/gw.lua $(INST_BINDIR)/gw/bin
