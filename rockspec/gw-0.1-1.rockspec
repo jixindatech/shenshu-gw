@@ -3,7 +3,7 @@ version = "0.1-1"
 supported_platforms = {"linux"}
 
 source = {
-    url = "gitrec+https://github.com/jixindatech/shenshu-gw.git",
+    url = "git://github.com/jixindatech/shenshu-gw.git",
 }
 
 description = {
@@ -13,8 +13,6 @@ description = {
 }
 
 dependencies = {
-    "lua >= 5.1, < 5.4",
-    "luarocks-fetch-gitrec",
     "lua-resty-template = 1.9",
     "lua-tinyyaml = 1.0",
     "luafilesystem = 1.7.0-2",
