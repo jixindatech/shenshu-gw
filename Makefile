@@ -59,7 +59,8 @@ MAKE_LIBS  = $(C_LIBS)
 all: $(MAKE_LIBS)
 
 libinjection:
-	git clone git@github.com:client9/libinjection.git
+	git submodule init
+	git submodule update
 	cd $@ && make all
 	cp $@/src/$@.so gw/
 
