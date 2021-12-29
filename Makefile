@@ -60,6 +60,7 @@ all: $(MAKE_LIBS)
 
 libinjection:
 	cd $@ && make all
+	@echo `pwd`
 	cp $@/src/$@.so gw/
 
 SHELL := /bin/bash -o pipefail
