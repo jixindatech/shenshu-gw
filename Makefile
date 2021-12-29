@@ -13,6 +13,7 @@ OPENSSL_PREFIX ?= $(addprefix $(OR_PREFIX), openssl)
 HOMEBREW_PREFIX ?= /usr/local
 
 LUA_HS = https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec
+GIT_REC = luarocks-fetch-gitrec
 
 show:
 	@echo ${INST_PREFIX}
@@ -103,6 +104,7 @@ else
 	$(LUAROCKS) config --local variables.OPENSSL_INCDIR $(addprefix $(OPENSSL_PREFIX), /include)
 endif
 	$(LUAROCKS) install ${LUA_HS} --tree=deps --local $(LUAROCKS_SERVER_OPT)
+	$(LUAROCKS) install ${GIT_REC} --tree=deps --local $(LUAROCKS_SERVER_OPT)
 	$(LUAROCKS) install rockspec/gw-0.1-0.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
 else
 	@echo "WARN: You're not using LuaRocks 3.x, please add the following items to your LuaRocks config file:"
@@ -111,6 +113,7 @@ else
 	@echo "    OPENSSL_INCDIR=$(addprefix $(OPENSSL_PREFIX), /include)"
 	@echo "}"
 	$(LUAROCKS) install ${LUA_HS} --tree=deps --local $(LUAROCKS_SERVER_OPT)
+	$(LUAROCKS) install ${GIT_REC} --tree=deps --local $(LUAROCKS_SERVER_OPT)
 	$(LUAROCKS) install rockspec/gw-0.1-0.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
 endif
 
