@@ -68,7 +68,7 @@ VERSION ?= latest
 RELEASE_SRC = gw-${VERSION}-src
 
 .PHONY: default
-default:
+default: libinjection
 ifeq ($(OR_EXEC), )
 	ifeq ("$(wildcard /usr/local/openresty-debug/bin/openresty)", "")
 		@echo "WARNING: OpenResty not found. You have to install OpenResty and add the binary file to PATH before install gw."
