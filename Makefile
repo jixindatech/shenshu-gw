@@ -180,6 +180,8 @@ install: default
 	$(INSTALL) gw/plugins/*.lua $(INST_LUADIR)/gw/plugins/
 	$(INSTALL) -d $(INST_LUADIR)/gw/plugins/shenshu
 	$(INSTALL) gw/plugins/shenshu/*.lua $(INST_LUADIR)/gw/plugins/shenshu/
+	$(INSTALL) -d $(INST_LUADIR)/gw/plugins/shenshu/rule
+	$(INSTALL) gw/plugins/shenshu/rule/*.lua $(INST_LUADIR)/gw/plugins/shenshu/rule/
 
 	$(INSTALL) -d $(INST_LUADIR)/gw/router
 	$(INSTALL) gw/router/*.lua $(INST_LUADIR)/gw/router/

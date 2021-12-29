@@ -28,7 +28,7 @@ ARG ENABLE_PROXY=true
 # add runtime for  gw
 RUN set -x \
     && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i 's,https://dl-cdn.alpinelinux.org,https://mirrors.aliyun.com,g' /etc/apk/repositories) \
-    && apk add --no-cache bash libstdc++ curl tzdata
+    && apk add --no-cache bash libstdc++ curl tzdata hyperscan
 
 WORKDIR /usr/local/gw
 
