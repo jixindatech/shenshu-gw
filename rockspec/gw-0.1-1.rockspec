@@ -13,7 +13,7 @@ description = {
 }
 
 dependencies = {
-    "luarocks-fetch-gitrec"
+    "luarocks-fetch-gitrec",
     "lua-resty-template = 1.9",
     "lua-tinyyaml = 1.0",
     "luafilesystem = 1.7.0-2",
