@@ -13,9 +13,11 @@ RUN set -x \
     cmake \
     git \
     hyperscan-dev \
+    python2 \
     && mkdir ~/.luarocks \
     && luarocks config variables.OPENSSL_LIBDIR /usr/local/openresty/openssl/lib \
     && luarocks config variables.OPENSSL_INCDIR /usr/local/openresty/openssl/include \
+    && luarocks install luarocks-fetch-gitrec \
     && luarocks install https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec --tree=/usr/local/gw/deps \
     && luarocks build gw-0.1-1.rockspec --tree=/usr/local/gw/deps \
     && cp -v /usr/local/gw/deps/lib/luarocks/rocks-5.1/gw/0.1-1/bin/gw /usr/bin/ \

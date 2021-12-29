@@ -3,7 +3,7 @@ version = "0.1-1"
 supported_platforms = {"linux"}
 
 source = {
-    url = "git://github.com/jixindatech/shenshu-gw.git",
+    url = "gitrec+https://github.com/jixindatech/shenshu-gw.git",
 }
 
 description = {
