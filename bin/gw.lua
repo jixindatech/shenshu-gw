@@ -80,7 +80,7 @@ events {
 }
 
 worker_rlimit_core  {* worker_rlimit_core *};
-working_directory   /tmp/gw_cores/;
+working_directory   /usr/local/gw/;
 
 worker_shutdown_timeout 3;
 
