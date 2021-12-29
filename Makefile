@@ -169,6 +169,7 @@ install: default
 	$(INSTALL) conf/cert/* /usr/local/gw/conf/cert/
 
 	$(INSTALL) -d $(INST_LUADIR)/gw
+	$(INSTALL) gw/*.so $(INST_LUADIR)/gw/
 	$(INSTALL) gw/*.lua $(INST_LUADIR)/gw/
 
 	$(INSTALL) -d $(INST_LUADIR)/gw/cli
