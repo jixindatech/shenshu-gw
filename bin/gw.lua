@@ -16,8 +16,9 @@ excute_cmd("install -d -m 777 /tmp/gw_cores/")
 local pkg_cpath_org = package.cpath
 local pkg_path_org = package.path
 
-local gw_home = "/root/onlinegit/shenshu-gw"
+local gw_home = "/usr/local/gw"
 local pkg_cpath = gw_home .. "/deps/lib64/lua/5.1/?.so;"
+                  .. gw_home .. "/gw/?.so"
                   .. gw_home .. "/deps/lib/lua/5.1/?.so;;"
 local pkg_path  = gw_home .. "/deps/share/lua/5.1/gw/lua/?.lua;"
                   .. gw_home .. "/deps/share/lua/5.1/?.lua;;"
@@ -31,6 +32,7 @@ if script_path:sub(1, 2) == './' then
     end
 
     pkg_cpath = gw_home .. "/deps/lib64/lua/5.1/?.so;"
+                .. gw_home .. "/gw/?.so"
                 .. gw_home .. "/deps/lib/lua/5.1/?.so;"
     pkg_path  = gw_home .. "/lua/?.lua;"
                 .. gw_home .. "/deps/share/lua/5.1/?.lua;;"
@@ -86,9 +88,9 @@ worker_shutdown_timeout 3;
 
 {% if stream_proxy then %}
 stream {
-    lua_package_path  "$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/lua/?.lua;]=]
-                      .. [=[/usr/local/share/lua/5.1/gw/lua/?.lua;]=]
-                      .. [=[$prefix/deps/share/lua/5.1/gw/lua/?.lua;]=]
+    lua_package_path  "$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/?.lua;]=]
+                      .. [=[/usr/local/share/lua/5.1/gw/?.lua;]=]
+                      .. [=[$prefix/deps/share/lua/5.1/gw/?.lua;]=]
                       .. [=[{*gw_lua_home*}/lua/?.lua;;{*lua_path*};";
     lua_package_cpath "$prefix/deps/lib64/lua/5.1/?.so;]=]
                       .. [=[$prefix/deps/lib/lua/5.1/?.so;;]=]
@@ -138,10 +140,10 @@ stream {
 {% end %}
 
 http {
-    lua_package_path  "$prefix/gw/?.lua;$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/lua/?.lua;]=]
-                      .. [=[/usr/local/share/lua/5.1/gw/lua/?.lua;]=]
-                      .. [=[$prefix/deps/share/lua/5.1/gw/lua/?.lua;]=]
-                      .. [=[{*gw_lua_home*}/lua/?.lua;;{*lua_path*};";
+    lua_package_path  "$prefix/gw/?.lua;$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/?.lua;]=]
+                      .. [=[/usr/local/share/lua/5.1/gw/?.lua;]=]
+                      .. [=[$prefix/deps/share/lua/5.1/gw/?.lua;]=]
+                      .. [=[{*gw_lua_home*}/gw/?.lua;;{*lua_path*};";
     lua_package_cpath "$prefix/deps/lib64/lua/5.1/?.so;]=]
                       .. [=[$prefix/deps/lib/lua/5.1/?.so;;]=]
                       .. [=[{*lua_cpath*};";

@@ -12,6 +12,8 @@ OR_PREFIX ?= $(shell $(OR_EXEC) -V 2>&1 | grep -Eo 'prefix=(.*)/nginx\s+' | grep
 OPENSSL_PREFIX ?= $(addprefix $(OR_PREFIX), openssl)
 HOMEBREW_PREFIX ?= /usr/local
 
+VERSION = 0.1-1
+
 LUA_HS = https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec
 
 show:
@@ -103,7 +105,7 @@ else
 	$(LUAROCKS) config --local variables.OPENSSL_INCDIR $(addprefix $(OPENSSL_PREFIX), /include)
 endif
 	$(LUAROCKS) install ${LUA_HS} --tree=deps --local $(LUAROCKS_SERVER_OPT)
-	$(LUAROCKS) install rockspec/gw-0.1-0.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
+	$(LUAROCKS) install rockspec/gw-${VERSION}.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
 else
 	@echo "WARN: You're not using LuaRocks 3.x, please add the following items to your LuaRocks config file:"
 	@echo "variables = {"
@@ -111,7 +113,7 @@ else
 	@echo "    OPENSSL_INCDIR=$(addprefix $(OPENSSL_PREFIX), /include)"
 	@echo "}"
 	$(LUAROCKS) install ${LUA_HS} --tree=deps --local $(LUAROCKS_SERVER_OPT)
-	$(LUAROCKS) install rockspec/gw-0.1-0.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
+	$(LUAROCKS) install rockspec/gw-${VERSION}.rockspec --tree=deps --only-deps --local $(LUAROCKS_SERVER_OPT)
 endif
 
 ### init:             Initialize the runtime environment
@@ -160,8 +162,11 @@ reload: default
 .PHONY: install
 install: default
 	$(INSTALL) -d /usr/local/gw/
+	$(INSTALL) -d /usr/local/gw/deps
+	cp -rf deps/* /usr/local/gw/deps
 	$(INSTALL) -d /usr/local/gw/logs/
 	$(INSTALL) -d /usr/local/gw/etc/
+	$(INSTALL) etc/*.yaml /usr/local/gw/etc/
 	$(INSTALL) -d /usr/local/gw/conf/cert
 	$(INSTALL) conf/nginx.conf /usr/local/gw/conf/nginx.conf
 	$(INSTALL) conf/mime.types /usr/local/gw/conf/mime.types
