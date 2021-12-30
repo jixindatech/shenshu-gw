@@ -9,7 +9,7 @@ function _M.file(msg)
     ngx.log(ngx.ERR, logstr)
 end
 
-function _M.rsyslog(msg, host, port, type)
+function _M.rsyslog(name, msg, host, port, type)
     if not logger.initted() then
         local ok, err = logger.init {
             host = host,

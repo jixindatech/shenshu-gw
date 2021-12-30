@@ -194,7 +194,7 @@ function _M.log(ctx)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog(msg,
+            logger.rsyslog("shenshu_cc_msg", msg,
                     module.local_config.rsyslog.host,
                     module.local_config.rsyslog.port,
                     module.local_config.rsyslog.type)

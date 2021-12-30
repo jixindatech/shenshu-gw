@@ -16,20 +16,20 @@ VERSION = 0.1-1
 
 LUA_HS = https://gitee.com/chengfangang/luahs/raw/master/luahs-dev-1.rockspec
 
-show:
-	@echo ${INST_PREFIX}
-	@echo ${INST_LIBDIR}
-	@echo ${INST_LUADIR}
-	@echo ${INST_BINDIR}
-	@echo ${INSTALL}
-	@echo ${UNAME}
-	@echo ${UNAME_MACHINE}
-	@echo ${OR_EXEC}
-	@echo ${LUAROCKS}
-	@echo ${LUAROCKS_VER}
-	@echo ${OR_PREFIX}
-	@echo ${OPENSSL_PREFIX}
-	@echo ${HOMEBREW_PREFIX}
+#show:
+#	@echo ${INST_PREFIX}
+#	@echo ${INST_LIBDIR}
+#	@echo ${INST_LUADIR}
+#	@echo ${INST_BINDIR}
+#	@echo ${INSTALL}
+#	@echo ${UNAME}
+#	@echo ${UNAME_MACHINE}
+#	@echo ${OR_EXEC}
+#	@echo ${LUAROCKS}
+#	@echo ${LUAROCKS_VER}
+#	@echo ${OR_PREFIX}
+#	@echo ${OPENSSL_PREFIX}
+#	@echo ${HOMEBREW_PREFIX}
 
 # OpenResty 1.17.8 or higher version uses openssl111 as the openssl dirname.
 ifeq ($(shell test -d $(addprefix $(OR_PREFIX), openssl111) && echo -n yes), yes)

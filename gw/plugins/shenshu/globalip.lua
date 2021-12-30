@@ -119,14 +119,14 @@ function _M.access(ctx)
 end
 
 function _M.log(ctx)
-    local msg = ctx.globalip_msg
+    local msg = ctx.shenshu_globalip_msg
     if msg ~= nil then
         if module and module.local_config.file then
             logger.file(msg)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog(msg,
+            logger.rsyslog("shenshu_globalip_msg", msg,
                     module.local_config.rsyslog.host,
                     module.local_config.rsyslog.port,
                     module.local_config.rsyslog.type)
@@ -138,7 +138,7 @@ function _M.log(ctx)
                     module.local_config.kafka.topic)
         end
 
-        ctx.globalip_msg = nil
+        ctx.shenshu_globalip_msg = nil
     end
 end
 

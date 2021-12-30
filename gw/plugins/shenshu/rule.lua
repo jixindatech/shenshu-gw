@@ -306,7 +306,7 @@ function _M.log(ctx)
             end
 
             if module and module.local_config.specific_log.rsyslog then
-                logger.rsyslog(event,
+                logger.rsyslog("shenshu_specific_matched_events", event,
                         module.local_config.specific_log.rsyslog.host,
                         module.local_config.specific_log.rsyslog.port,
                         module.local_config.specific_log.rsyslog.type)
@@ -328,9 +328,9 @@ function _M.log(ctx)
                 logger.file(event)
             end
 
-            if module and module.local_config.specific_log.rsyslog then
-                logger.rsyslog(event,
-                        module.local_config.specific_log.rsyslog.host,
+            if module and module.local_config.batch_log.rsyslog then
+                logger.rsyslog("shenshu_batch_matched_events", event,
+                        module.local_config.batch_log.rsyslog.host,
                         module.local_config.batch_log.rsyslog.port,
                         module.local_config.batch_log.rsyslog.type)
             end
