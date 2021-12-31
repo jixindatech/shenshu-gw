@@ -61,6 +61,16 @@ function _M.http_init_worker()
     if err ~= nil then
         ngx.log(ngx.ERR, "gw init worker failed:" .. err)
     end
+
+    local rsyslog_config = config.get_config_rsyslog()
+    if rsyslog_config == nil then
+        ngx.log(ngx.warn, "rsyslog use default config")
+    end
+
+    ok, err = log.init_worker(rsyslog_config)
+    if err ~= nil then
+        ngx.log(ngx.ERR, "log init worker failed:" .. err)
+    end
 end
 
 function _M.http_ssl_phase()
@@ -143,8 +153,6 @@ function _M.http_log_phase()
 
     local api_ctx = ngx.ctx.api_ctx
     plugin.run("log", api_ctx)
-
-    log.run(api_ctx)
 
     tablepool.release("api_ctx", api_ctx)
 end

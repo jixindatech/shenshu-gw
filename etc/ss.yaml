@@ -1,10 +1,7 @@
 deny_code: 401
 ip_log:
   file: error.log  # 仅测试用
-  rsyslog:
-    host: 127.0.0.1
-    port: 10514
-    type: tcp
+  rsyslog: 1
   #kafka:
   #  topic: shenshu_ip
   #  broker:
@@ -15,10 +12,7 @@ ip_log:
   #      port: 9092
 cc_log:
   file: error.log  # 仅测试用
-  rsyslog:
-    host: 127.0.0.1
-    port: 10515
-    type: tcp
+  rsyslog: 1
   #kafka:
   #  topic: shenshu_cc
   #  broker:
@@ -29,10 +23,7 @@ cc_log:
   #      port: 9092
 specific_log:
   file: error.log  # 仅测试用
-  rsyslog:
-    host: 127.0.0.1
-    port: 10516
-    type: tcp
+  rsyslog: 1
   #kafka:
   #  topic: shenshu_specific
   #  broker:
@@ -43,10 +34,7 @@ specific_log:
   #      port: 9092
 batch_log:
   file: error.log  # 仅测试用
-  rsyslog:
-    host: 127.0.0.1
-    port: 10517
-    type: tcp
+  rsyslog: 1
   #kafka:
   #  topic: shenshu_batch
   #  broker:

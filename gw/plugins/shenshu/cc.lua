@@ -11,7 +11,7 @@ local radix = require("resty.radixtree")
 local limit_conn = require("resty.limit.conn")
 local limit_req = require("resty.limit.req")
 local limit_traffic = require("resty.limit.traffic")
-local logger = require("gw.plugins.shenshu.log")
+local logger = require("gw.log")
 local config = require("gw.core.config")
 local tab = require("gw.core.table")
 
@@ -194,10 +194,7 @@ function _M.log(ctx)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog("shenshu_cc_msg", msg,
-                    module.local_config.rsyslog.host,
-                    module.local_config.rsyslog.port,
-                    module.local_config.rsyslog.type)
+            logger.rsyslog("shenshu_cc", msg)
         end
 
         if module and module.local_config.kafka then

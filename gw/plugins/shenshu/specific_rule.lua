@@ -5,7 +5,6 @@ local tab_insert = table.insert
 local schema = require("gw.schema")
 local cjson = require("cjson.safe")
 local producer = require "resty.kafka.producer"
-local logger = require("resty.logger.socket")
 local config = require("gw.core.config")
 
 local ngx = ngx

@@ -7,7 +7,7 @@ local tab_insert = table.insert
 local tablepool = require("tablepool")
 local cjson = require("cjson.safe")
 local schema = require("gw.schema")
-local logger = require("gw.plugins.shenshu.log")
+local logger = require("gw.log")
 local config = require("gw.core.config")
 local specific = require("gw.plugins.shenshu.specific_rule")
 local batch = require("gw.plugins.shenshu.batch_rule")
@@ -306,10 +306,7 @@ function _M.log(ctx)
             end
 
             if module and module.local_config.specific_log.rsyslog then
-                logger.rsyslog("shenshu_specific_matched_events", event,
-                        module.local_config.specific_log.rsyslog.host,
-                        module.local_config.specific_log.rsyslog.port,
-                        module.local_config.specific_log.rsyslog.type)
+                logger.rsyslog("shenshu_specific", event)
             end
 
             if module and module.local_config.specific_log.kafka then
@@ -329,10 +326,7 @@ function _M.log(ctx)
             end
 
             if module and module.local_config.batch_log.rsyslog then
-                logger.rsyslog("shenshu_batch_matched_events", event,
-                        module.local_config.batch_log.rsyslog.host,
-                        module.local_config.batch_log.rsyslog.port,
-                        module.local_config.batch_log.rsyslog.type)
+                logger.rsyslog("shenshu_batch", event)
             end
 
             if module and module.local_config.specific_log.kafka then

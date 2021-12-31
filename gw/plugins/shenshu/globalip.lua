@@ -5,7 +5,7 @@ local cjson = require("cjson.safe")
 local ipmatcher = require("resty.ipmatcher")
 local schema = require("gw.schema")
 local tab_insert = table.insert
-local logger = require("gw.plugins.shenshu.log")
+local logger = require("gw.log")
 local config = require("gw.core.config")
 
 local ngx = ngx
@@ -126,10 +126,7 @@ function _M.log(ctx)
         end
 
         if module and module.local_config.rsyslog then
-            logger.rsyslog("shenshu_globalip_msg", msg,
-                    module.local_config.rsyslog.host,
-                    module.local_config.rsyslog.port,
-                    module.local_config.rsyslog.type)
+            logger.rsyslog("shenshu_ip", msg)
         end
 
         if module and module.local_config.kafka then

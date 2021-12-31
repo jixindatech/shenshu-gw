@@ -39,6 +39,10 @@ function _M.get_config_type()
     return nil
 end
 
+function _M.get_config_rsyslog()
+    return config_data["rsyslog"]
+end
+
 function _M.new(name, options)
     if config_data then
         if config_data.config_type == "redis" then
