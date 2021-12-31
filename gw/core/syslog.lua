@@ -96,7 +96,7 @@ function _M.encode(facility, severity, hostname, appname, pid, msgid, msg)
     end
 
     return "<" .. pri .. ">1 " .. t .. " " .. hostname .. " " .. appname .. " " .. pid
-            .. " " ..msgid ..  msg .. "\n"
+            .. " " ..msgid .. " " .. msg .. "\n"
 end
 
 return _M
