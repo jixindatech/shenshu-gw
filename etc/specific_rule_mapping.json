@@ -9,6 +9,9 @@
       "id": {
         "type": "integer"
       },
+      "router": {
+        "type": "integer"
+      },
       "uuid": {
         "type": "keyword"
       },
@@ -31,7 +34,7 @@
         "fielddata": true
       },
       "values": {
-        "type": "nested"
+        "type": "text"
       }
     }
   }

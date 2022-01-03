@@ -165,13 +165,16 @@ function _M.access(ctx)
                     else
                         variable = params[rule.variable]
                     end
+                    if variable ~= nil then
+                        matched, text = rules_match(rule, variable, rules)
+                        if matched ~= true then
+                            break
+                        end
 
-                    matched, text = rules_match(rule, variable, rules)
-                    if matched ~= true then
+                        tab_insert(matched_text, variable)
+                    else
                         break
                     end
-
-                    tab_insert(matched_text, variable)
                 end
 
                 if matched then
@@ -183,6 +186,7 @@ function _M.access(ctx)
 
                     local event = {
                         id = item.id,
+                        router = route.id,
                         uuid = ctx.shenshu_uuid,
                         host = ctx.var.host,
                         ip = ctx.shenshu_ip,
@@ -241,6 +245,7 @@ function _M.access(ctx)
                     for _, hit in ipairs(hits) do
                         local event = {
                             id = hit.id,
+                            router = route.id,
                             uuid = ctx.shenshu_uuid,
                             values = params.URI_ARGS,
                             host = ctx.var.host,
@@ -272,6 +277,7 @@ function _M.access(ctx)
                     for _, hit in ipairs(hits) do
                         local event = {
                             id = hit.id,
+                            router = route.id,
                             uuid = ctx.shenshu_uuid,
                             values = params.BODY_ARGS,
                             host = ctx.var.host,

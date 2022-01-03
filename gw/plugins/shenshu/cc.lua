@@ -149,6 +149,7 @@ function _M.access(ctx)
                 local msg = tab.new(20, 10)
                 msg = {
                     host = ctx.var.host,
+                    router = route.id,
                     ip = ctx.shenshu_ip,
                     timestamp = ngx_time(),
                     uri = ctx.var.uri,
