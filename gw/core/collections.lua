@@ -24,6 +24,7 @@ _M.lookup = {
         local body_size = ngx.var.http_content_length and tonumber(ngx.var.http_content_length) or 0
 
         collections.REMOTE_ADDR       = ngx.var.remote_addr
+        collections.IP                = ctx.shenshu_ip
         collections.HTTP_VERSION      = ngx.req.http_version()
         collections.METHOD            = request_method
         collections.URI               = ngx.var.uri
