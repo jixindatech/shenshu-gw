@@ -81,7 +81,6 @@ function _M.init_worker(ip_config)
 end
 
 function _M.access(ctx)
-    ctx.ip = ctx.var.remote_addr
     local route = ctx.matched_route
     local ips = module:get(route.id)
     if #ips.value.allow > 0 then
@@ -92,9 +91,9 @@ function _M.access(ctx)
             end
             ips.value.allow_matcher = matcher
         end
-        local ok, err = ips.value.allow_matcher:match(ctx.ip)
+        local ok, err = ips.value.allow_matcher:match(ctx.shenshu_ip)
         if ok then
-            ctx.ip_allowed = true
+            ctx.shenshu_ip_allowed = true
             return true, nil
         end
     end
@@ -108,9 +107,9 @@ function _M.access(ctx)
             ips.value.deny_matcher = matcher
         end
 
-        local ok, err = ips.value.deny_matcher:match(ctx.ip)
+        local ok, err = ips.value.deny_matcher:match(ctx.shenshu_ip)
         if ok then
-            ctx.ip_denied = true
+            ctx.shenshu_ip_denied = true
             return true, nil
         end
     end

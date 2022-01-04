@@ -88,11 +88,11 @@ function _M.access(ctx)
         ngx.log(ngx.ERR, "err:" .. err)
     end
 
-    if ctx.ip_allowed then
+    if ctx.shenshu_ip_allowed then
         return
     end
 
-    if ctx.ip_denied then
+    if ctx.shenshu_ip_denied then
         ngx.exit(400)
     end
 
@@ -101,11 +101,11 @@ function _M.access(ctx)
         ngx.log(ngx.ERR, "err:" .. err)
     end
 
-    if ctx.ip_allowed then
+    if ctx.shenshu_ip_allowed then
         return
     end
 
-    if ctx.ip_denied then
+    if ctx.shenshu_ip_denied then
         ngx.exit(400)
     end
 

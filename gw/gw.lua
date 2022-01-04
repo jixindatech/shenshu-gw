@@ -94,7 +94,6 @@ function _M.http_ssl_phase()
 end
 
 function _M.http_access_phase()
-    ngx.log(ngx.ERR, 'access phase')
     local ngx_ctx = ngx.ctx
     local api_ctx = tablepool.fetch("api_ctx", 0, 32)
     ngx_ctx.api_ctx = api_ctx
@@ -118,7 +117,6 @@ function _M.http_access_phase()
 end
 
 function _M.http_balancer_phase()
-    ngx.log(ngx.ERR, 'http_balancer_phase')
     local api_ctx = ngx.ctx.api_ctx
     if not api_ctx then
         return ngx.exit(500)
@@ -129,7 +127,6 @@ function _M.http_balancer_phase()
         ngx.exit(ngx.ERROR)
     end
 
-    ngx.log(ngx.ERR, "host:" .. tostring(host) .. " port:".. tostring(port))
     local ok, err = balancer.set_current_peer(host, port)
     if not ok then
         ngx.log(ngx.ERR, "banlancer error:", err)
@@ -138,19 +135,15 @@ end
 
 function _M.http_header_filter_phase()
     local ngx_ctx = ngx.ctx
-    ngx.log(ngx.ERR, 'header filter phase')
     plugin.run("header_filter", ngx_ctx)
 end
 
 function _M.http_body_filter_phase()
     local ngx_ctx = ngx.ctx
-    ngx.log(ngx.ERR, 'body filter phase')
     plugin.run("body_filter", ngx_ctx)
 end
 
 function _M.http_log_phase()
-    ngx.log(ngx.ERR, 'log phase')
-
     local api_ctx = ngx.ctx.api_ctx
     plugin.run("log", api_ctx)
 

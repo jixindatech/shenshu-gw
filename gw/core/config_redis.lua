@@ -154,9 +154,7 @@ local function sync_data(self)
                 self.init_func(conf_item)
             end
         end
-
-        ngx.log(ngx.ERR, "key:" .. key .. " data:" .. cjson.encode(conf_item))
-
+        --ngx.log(ngx.ERR, "key:" .. key .. " data:" .. cjson.encode(conf_item))
         ::CONTINUE::
     end
 
