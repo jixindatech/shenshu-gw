@@ -173,6 +173,7 @@ function _M.access(ctx)
 
                         tab_insert(matched_text, variable)
                     else
+                        matched = false
                         break
                     end
                 end
