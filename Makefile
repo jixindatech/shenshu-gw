@@ -163,7 +163,6 @@ reload: default
 install: default
 	$(INSTALL) -d /usr/local/gw/
 	$(INSTALL) -d /usr/local/gw/deps
-	cp -rf deps/* /usr/local/gw/deps
 	$(INSTALL) -d /usr/local/gw/logs/
 	$(INSTALL) -d /usr/local/gw/etc/
 	$(INSTALL) etc/*.yaml /usr/local/gw/etc/
