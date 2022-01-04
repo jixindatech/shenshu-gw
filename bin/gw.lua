@@ -86,59 +86,6 @@ working_directory   /usr/local/gw/;
 
 worker_shutdown_timeout 3;
 
-{% if stream_proxy then %}
-stream {
-    lua_package_path  "$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/?.lua;]=]
-                      .. [=[/usr/local/share/lua/5.1/gw/?.lua;]=]
-                      .. [=[$prefix/deps/share/lua/5.1/gw/?.lua;]=]
-                      .. [=[{*gw_lua_home*}/lua/?.lua;;{*lua_path*};";
-    lua_package_cpath "$prefix/deps/lib64/lua/5.1/?.so;]=]
-                      .. [=[$prefix/deps/lib/lua/5.1/?.so;;]=]
-                      .. [=[{*lua_cpath*};";
-    lua_socket_log_errors off;
-
-    upstream gw_backend {
-        server 127.0.0.1:80;
-        balancer_by_lua_block {
-            gw.stream_balancer_phase()
-        }
-    }
-
-    init_by_lua_block {
-        require "resty.core"
-        gw = require("gw")
-        gw.stream_init()
-    }
-
-    init_worker_by_lua_block {
-        gw.stream_init_worker()
-    }
-
-    server {
-        {% for _, port in ipairs(stream_proxy.tcp or {}) do %}
-        listen {*port*} {% if enable_reuseport then %} reuseport {% end %} {% if proxy_protocol and proxy_protocol.enable_tcp_pp then %} proxy_protocol {% end %};
-        {% end %}
-        {% for _, port in ipairs(stream_proxy.udp or {}) do %}
-        listen {*port*} udp {% if enable_reuseport then %} reuseport {% end %};
-        {% end %}
-
-        {% if proxy_protocol and proxy_protocol.enable_tcp_pp_to_upstream then %}
-        proxy_protocol on;
-        {% end %}
-
-        preread_by_lua_block {
-            gw.stream_preread_phase()
-        }
-
-        proxy_pass gw_backend;
-
-        log_by_lua_block {
-            gw.stream_log_phase()
-        }
-    }
-}
-{% end %}
-
 http {
     lua_package_path  "$prefix/gw/?.lua;$prefix/deps/share/lua/5.1/?.lua;/usr/share/lua/5.1/gw/?.lua;]=]
                       .. [=[/usr/local/share/lua/5.1/gw/?.lua;]=]
@@ -185,19 +132,12 @@ http {
 
     include mime.types;
 
-    {% if real_ip_header then %}
-    real_ip_header {* real_ip_header *};
-    {% print("\nDeprecated: gw.real_ip_header has been moved to nginx_config.http.real_ip_header. gw.real_ip_header will be removed in the future version. Please use nginx_config.http.real_ip_header first.\n\n") %}
-    {% elseif http.real_ip_header then %}
+    {% if http.real_ip_header then %}
     real_ip_header {* http.real_ip_header *};
     {% end %}
 
-    {% if real_ip_from then %}
-    {% print("\nDeprecated: gw.real_ip_from has been moved to nginx_config.http.real_ip_from. gw.real_ip_from will be removed in the future version. Please use nginx_config.http.real_ip_from first.\n\n") %}
-    {% for _, real_ip in ipairs(real_ip_from) do %}
-    set_real_ip_from {*real_ip*};
-    {% end %}
-    {% elseif http.real_ip_from then %}
+    {% if http.real_ip_from then %}
+    real_ip_recursive on;
     {% for _, real_ip in ipairs(http.real_ip_from) do %}
     set_real_ip_from {*real_ip*};
     {% end %}
@@ -221,29 +161,6 @@ http {
     init_worker_by_lua_block {
         gw.http_init_worker()
     }
-
-    {% if enable_admin and port_admin then %}
-    server {
-        listen {* port_admin *};
-
-        location /gw/admin {
-            {%if allow_admin then%}
-                {% for _, allow_ip in ipairs(allow_admin) do %}
-                allow {*allow_ip*};
-                {% end %}
-                deny all;
-            {%end%}
-
-            content_by_lua_block {
-                gw.http_admin()
-            }
-        }
-
-        location /robots.txt {
-            return 200 'User-agent: *\nDisallow: /';
-        }
-    }
-    {% end %}
 
     server {
         listen {* node_listen *} {% if enable_reuseport then %} reuseport {% end %};

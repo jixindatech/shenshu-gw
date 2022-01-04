@@ -119,24 +119,24 @@ endif
 ### init:             Initialize the runtime environment
 .PHONY: init
 init: default
-	./bin/gw init
+	./bin/gw.lua init
 
 ### start:              Start the gw server
 .PHONY: start
 start: default
-	./bin/gw start
+	./bin/gw.lua start
 
 
 ### restart:             Restart the gw server, exit gracefully
 .PHONY: restart
 quit: default
-	./bin/gw restart
+	./bin/gw.lua restart
 
 
 ### stop:             Stop the gw server, exit immediately
 .PHONY: stop
 stop: default
-	./bin/gw stop
+	./bin/gw.lua stop
 
 
 ### verify:           Verify the configuration of gw server
