@@ -64,7 +64,7 @@ function _M.http_init_worker()
 
     local rsyslog_config = config.get_config_rsyslog()
     if rsyslog_config == nil then
-        ngx.log(ngx.warn, "rsyslog use default config")
+        ngx.log(ngx.ERR, "rsyslog use default config")
     end
 
     ok, err = log.init_worker(rsyslog_config)
