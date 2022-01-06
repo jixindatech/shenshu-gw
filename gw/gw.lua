@@ -74,8 +74,6 @@ function _M.http_init_worker()
 end
 
 function _M.http_ssl_phase()
-    ngx.log(ngx.ERR, 'ssl phase')
-
     local ngx_ctx = ngx.ctx
     local api_ctx = ngx_ctx.api_ctx
 
@@ -89,8 +87,6 @@ function _M.http_ssl_phase()
         ngx.log(ngx.ERR, 'ssl phase error: ' .. err)
         ngx.exit(ngx.ERROR)
     end
-
-    ngx.log(ngx.ERR, 'ssl matched sni:' .. sni)
 end
 
 function _M.http_access_phase()
