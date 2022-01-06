@@ -33,7 +33,8 @@ ss.yaml 是神荼的事件日志配置文件，主要支持file，rsyslog和kafk
 
 ## 简单流程图
 ![image](doc/images/flow.png)
-##Contributing 
+
+## Contributing 
 欢迎issue和star
 
 ## Discussion Group

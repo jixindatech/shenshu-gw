@@ -30,7 +30,7 @@ English | [中文](./README.md)
 ## simple flow
 ![image](doc/images/flow.png)
 
-##Contributing
+## Contributing
 welecome issue and star
 
 ## Discussion Group
