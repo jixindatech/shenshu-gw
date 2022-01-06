@@ -40,6 +40,6 @@ ss.yaml 是神荼的事件日志配置文件，主要支持file，rsyslog和kafk
 ## Discussion Group
 QQ群: 254210748
 
-##License
+## License
 Unlicense
 
